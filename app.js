@@ -41,6 +41,37 @@
     return ok;
   };
 
+  // Persist a dataset to BOTH localStorage and Supabase, and WAIT for the
+  // Supabase write to finish. Returns true only if Supabase confirmed the save.
+  // This is the reliable save path used by admin/owner mutations: never claim
+  // "saved" unless the server accepted it.
+  function saveAndSync(key, value, opts) {
+    opts = opts || {};
+    // Always keep a local mirror (cache) first — never lose the user's work.
+    _originalLsSet(key, value);
+    // Update in-memory live objects eagerly so the UI reflects the change.
+    if (key === PRODUCTS_KEY) products = value;
+    else if (key === CATS_KEY) cats = value;
+    else if (key === ORDERS_KEY) orders = value;
+    else if (key === KEYS_KEY) keys = value;
+    else if (key === GIFT_KEY) giftConfig = value;
+    else if (key === SITE_KEY) { site = value; deepMergeDefaults(site, JSON.parse(JSON.stringify(DEFAULT_SITE))); }
+    else if (key === SESSION_KEY) session = value;
+    else if (key === USERS_KEY) users = value;
+    else if (key === CART_KEY) cart = value;
+
+    if (window.__candySupabaseReady && window.__candySync) {
+      return window.__candySync(key, value).then(function (ok) {
+        if (!ok && opts.onError) opts.onError();
+        else if (!ok) toast('Your change could not be saved — please retry.', 'error');
+        return ok;
+      });
+    }
+    // Not ready (offline / before warm): local only.
+    if (opts.onOffline) opts.onOffline();
+    return Promise.resolve(true);
+  }
+
   /* """"" Gift pricing configuration (owner-controlled) """"" */
   var DEFAULT_GIFT = {
     enabled: false,       // master toggle: is gift price-selection on?
@@ -205,13 +236,17 @@
         root.style.setProperty(mappings[key], theme[key]);
       }
     }
-    // Persist theme in site object
+    // Update the site object for later saves, but DON'T persist here —
+    // applyTheme is called on every keystroke by the live preview, so writing
+    // to storage here would overwrite the full saved theme with a partial one.
     site.theme = theme;
-    lsSet(SITE_KEY, site);
   }
 
   function resetThemeToDefaults() {
     applyTheme(DEFAULT_THEME);
+    // Persist the fully-reset theme.
+    lsSet(SITE_KEY, site);
+    if (window.__candySupabaseReady && window.__candySync) window.__candySync('candy_site', site);
   }
 
   // Apply saved theme on init (before any rendering)
@@ -286,9 +321,21 @@
   }
 
   function clearAllData() {
-    var keysToClear = [USERS_KEY, SESSION_KEY, CART_KEY, PRODUCTS_KEY, CATS_KEY, KEYS_KEY, SITE_KEY, ORDERS_KEY, GIFT_KEY, 'candy_storage_version', 'candy_owner_created', 'candy_notifications'];
-    keysToClear.forEach(function (k) { localStorage.removeItem(k); });
-    toast('All data cleared. Reloading...', 'success');
+    // Clear via lsSet so Supabase sync also clears the server data.
+    // We set each key to its "empty" default.
+    lsSet(USERS_KEY, []);
+    lsSet(SESSION_KEY, null);
+    lsSet(CART_KEY, []);
+    lsSet(PRODUCTS_KEY, []);
+    lsSet(CATS_KEY, []);
+    lsSet(KEYS_KEY, []);
+    lsSet(SITE_KEY, null); // will be re-initialized with defaults on reload
+    lsSet(ORDERS_KEY, []);
+    lsSet(GIFT_KEY, null);
+    _originalLsSet('candy_storage_version', STORAGE_VERSION);
+    _originalLsSet('candy_owner_created', false);
+    _originalLsSet('candy_notifications', []);
+    toast('All data cleared locally and on server. Reloading...', 'success');
     setTimeout(function () { window.location.reload(); }, 800);
   }
 
@@ -1409,9 +1456,26 @@
     }
 
     orders.unshift(order);
-    lsSet(ORDERS_KEY, orders);
+    toast('Saving order…', 'success');
+    saveAndSync(ORDERS_KEY, orders).then(function (ok) {
+      if (!ok) { toast('Order placed locally — server sync pending.', 'error'); }
 
-    var n = cart.length;
+      var n = cart.length;
+      var total = fmt(cartTotalAmt());
+      cart = [];
+      lsSet(CART_KEY, cart);
+      renderCartBadge();
+      renderCart();
+      closeModalOverlays();
+
+      var toastMsg = 'Order placed — ' + n + ' item(s) · ' + total + '.\n' + place + '.\nWe\'ll call ' + name + ' on ' + $('coPhone').value.trim() + ' to confirm.';
+      if (note) toastMsg += '\nNote: ' + note;
+      toast(toastMsg, 'success');
+      resetCheckoutForm();
+
+      // Trigger owner/employee notifications
+      notifyNewOrder(order);
+    });
     var total = fmt(cartTotalAmt());
     cart = [];
     lsSet(CART_KEY, cart);
@@ -1857,15 +1921,18 @@
     if (!p) return;
     if (!confirm('Delete "' + p.name + '"? This cannot be undone.')) return;
     products = products.filter(function (x) { return x.id !== id; });
-    lsSet(PRODUCTS_KEY, products);
     cart = cart.filter(function (e) { return e.id !== id; });
     lsSet(CART_KEY, cart);
-    renderAdminProducts();
-    renderShop();
-    renderFilters();
-    renderCartBadge();
-    renderCart();
-    toast('Product deleted.', 'success');
+    toast('Saving…', 'success');
+    saveAndSync(PRODUCTS_KEY, products).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      renderAdminProducts();
+      renderShop();
+      renderFilters();
+      renderCartBadge();
+      renderCart();
+      toast('Product deleted.', 'success');
+    });
   }
 
   /* Image file -> base64 (no hard size limit) */
@@ -1940,6 +2007,7 @@
     }
     if (!image) { toast('Add an image — upload from your PC or paste a URL.', 'error'); return; }
 
+    var isEdit = !!editingProductId;
     if (editingProductId) {
       var p2 = product(editingProductId);
       if (!p2) return;
@@ -1951,7 +2019,6 @@
       p2.tag = tag;
       p2.image = image;
       p2.isGift = isGift;
-      toast('Product updated.', 'success');
     } else {
       products.push({
         id: uid('p'),
@@ -1964,15 +2031,17 @@
         image: image,
         isGift: isGift
       });
-      toast('Product added.', 'success');
     }
 
-    if (!lsSet(PRODUCTS_KEY, products)) return;
-
-    resetProductForm();
-    renderAdminProducts();
-    renderShop();
-    renderFilters();
+    toast('Saving…', 'success');
+    saveAndSync(PRODUCTS_KEY, products).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      toast(isEdit ? 'Product updated.' : 'Product added.', 'success');
+      resetProductForm();
+      renderAdminProducts();
+      renderShop();
+      renderFilters();
+    });
   });
 
   /* """ Category admin """ */
@@ -2015,19 +2084,23 @@
     var name = $('cName').value.trim();
     var desc = $('cDesc').value.trim();
     if (!name) { toast('Category needs a name.', 'error'); return; }
+    var isEdit = !!editingCatId;
     if (editingCatId) {
       var cEdited = cats.find(function (x) { return x.id === editingCatId; });
-      if (cEdited) { cEdited.name = name; cEdited.description = desc; toast('Category updated.', 'success'); }
+      if (cEdited) { cEdited.name = name; cEdited.description = desc; }
     } else {
       cats.push({ id: uid('c'), name: name, description: desc });
-      toast('Category added.', 'success');
     }
-    if (!lsSet(CATS_KEY, cats)) return;
-    resetCatForm();
-    renderAdminCategories();
-    renderFilters();
-    renderShop();
-    renderAdminProducts();
+    toast('Saving…', 'success');
+    saveAndSync(CATS_KEY, cats).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      toast(isEdit ? 'Category updated.' : 'Category added.', 'success');
+      resetCatForm();
+      renderAdminCategories();
+      renderFilters();
+      renderShop();
+      renderAdminProducts();
+    });
   });
 
   $('cancelCatBtn').addEventListener('click', resetCatForm);
@@ -2058,21 +2131,27 @@
     var victims = products.filter(function (p) { return p.category === id; });
     var c = cats.find(function (x) { return x.id === id; });
     var other = cats.filter(function (x) { return x.id !== id; })[0];
+    var rehome = false;
     if (victims.length) {
       if (!confirm('Delete category "' + c.name + '"?\n\nIts ' + victims.length + ' product(s) will move to "' + other.name + '".')) return;
       products.forEach(function (p) { if (p.category === id) p.category = other.id; });
-      lsSet(PRODUCTS_KEY, products);
+      rehome = true;
     } else {
       if (!confirm('Delete category "' + c.name + '"?')) return;
     }
     cats = cats.filter(function (x) { return x.id !== id; });
-    lsSet(CATS_KEY, cats);
-    resetCatForm();
-    renderAdminCategories();
-    renderFilters();
-    renderShop();
-    renderAdminProducts();
-    toast('Category deleted.', 'success');
+    toast('Saving…', 'success');
+    (rehome ? saveAndSync(PRODUCTS_KEY, products) : Promise.resolve(true)).then(function (okProd) {
+      return okProd ? saveAndSync(CATS_KEY, cats) : Promise.resolve(false);
+    }).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      resetCatForm();
+      renderAdminCategories();
+      renderFilters();
+      renderShop();
+      renderAdminProducts();
+      toast('Category deleted.', 'success');
+    });
   }
 
   /* """ Owner keys """ */
@@ -2161,9 +2240,13 @@
       var rec = keys.find(function (x) { return x.code === code; });
       if (rec && confirm('Revoke key ' + code + '? It will be unusable from now on.')) {
         rec.revoked = true;
-        lsSet(KEYS_KEY, keys);
-        renderKeys();
-        toast('Key revoked.', 'success');
+        toast('Saving…', 'success');
+        saveAndSync(KEYS_KEY, keys).then(function (ok) {
+          if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+          renderKeys();
+          renderEmpKeys();
+          toast('Key revoked.', 'success');
+        });
       }
     }
   });
@@ -2176,10 +2259,14 @@
     if (!isFinite(t) || t <= Date.now()) { toast('Expiration must be in the future.', 'error'); return; }
     var code = genCode('CS');
     keys.push({ code: code, createdAt: Date.now(), expiresAt: t, used: false, revoked: false, type: 'owner' });
-    lsSet(KEYS_KEY, keys);
-    $('generateResult').textContent = code;
-    renderKeys();
-    toast('Owner key generated: ' + code, 'success');
+    toast('Saving…', 'success');
+    saveAndSync(KEYS_KEY, keys).then(function (ok) {
+      if (!ok) { toast('Key generation not saved — please retry.', 'error'); return; }
+      $('generateResult').textContent = code;
+      renderKeys();
+      renderEmpKeys();
+      toast('Owner key generated: ' + code, 'success');
+    });
   });
 
   /* """ Employee keys """ */
@@ -2240,9 +2327,13 @@
       var rec = keys.find(function (x) { return x.code === code; });
       if (rec && confirm('Revoke employee key ' + code + '? It will be unusable from now on.')) {
         rec.revoked = true;
-        lsSet(KEYS_KEY, keys);
-        renderEmpKeys();
-        toast('Employee key revoked.', 'success');
+        toast('Saving…', 'success');
+        saveAndSync(KEYS_KEY, keys).then(function (ok) {
+          if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+          renderKeys();
+          renderEmpKeys();
+          toast('Employee key revoked.', 'success');
+        });
       }
     }
   });
@@ -2255,10 +2346,14 @@
     if (!isFinite(t) || t <= Date.now()) { toast('Expiration must be in the future.', 'error'); return; }
     var code = genCode('EMP');
     keys.push({ code: code, createdAt: Date.now(), expiresAt: t, used: false, revoked: false, type: 'employee' });
-    lsSet(KEYS_KEY, keys);
-    $('empGenerateResult').textContent = code;
-    renderEmpKeys();
-    toast('Employee key generated: ' + code, 'success');
+    toast('Saving…', 'success');
+    saveAndSync(KEYS_KEY, keys).then(function (ok) {
+      if (!ok) { toast('Key generation not saved — please retry.', 'error'); return; }
+      $('empGenerateResult').textContent = code;
+      renderKeys();
+      renderEmpKeys();
+      toast('Employee key generated: ' + code, 'success');
+    });
   });
 
   /* """"" Site Content admin """"" */
@@ -2291,13 +2386,15 @@
     el.checked = !!giftConfig.enabled;
     el.onchange = function () {
       giftConfig.enabled = el.checked;
-      lsSet(GIFT_KEY, giftConfig);
-      label.textContent = el.checked ? 'ON' : 'OFF';
-      toast('Gift pricing ' + (el.checked ? 'enabled' : 'disabled') + '.', 'success');
-      // Re-render shop and filters to reflect the change
-      renderShop();
-      renderFilters();
-      renderAdminProducts();
+      toast('Saving…', 'success');
+      saveAndSync(GIFT_KEY, giftConfig).then(function (ok) {
+        if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+        label.textContent = el.checked ? 'ON' : 'OFF';
+        toast('Gift pricing ' + (el.checked ? 'enabled' : 'disabled') + '.', 'success');
+        renderShop();
+        renderFilters();
+        renderAdminProducts();
+      });
     };
     label.textContent = giftConfig.enabled ? 'ON' : 'OFF';
   }
@@ -2334,11 +2431,14 @@
         if (!isFinite(val) || val <= 0) { toast('Enter a valid DZD amount.', 'error'); return; }
         if (giftConfig.prices.indexOf(val) !== -1) { toast('This value already exists.', 'error'); return; }
         giftConfig.prices.push(val);
-        lsSet(GIFT_KEY, giftConfig);
-        renderGiftPrices();
-        renderShop();
-        renderAdminProducts();
-        toast('Gift price ' + fmt(val) + ' added.', 'success');
+        toast('Saving…', 'success');
+        saveAndSync(GIFT_KEY, giftConfig).then(function (ok) {
+          if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+          renderGiftPrices();
+          renderShop();
+          renderAdminProducts();
+          toast('Gift price ' + fmt(val) + ' added.', 'success');
+        });
       });
     }
 
@@ -2348,11 +2448,14 @@
         var val = parseInt(btn.getAttribute('data-gp-del'), 10);
         if (!confirm('Remove ' + fmt(val) + ' from gift options?')) return;
         giftConfig.prices = giftConfig.prices.filter(function (x) { return x !== val; });
-        lsSet(GIFT_KEY, giftConfig);
-        renderGiftPrices();
-        renderShop();
-        renderAdminProducts();
-        toast('Gift price removed.', 'success');
+        toast('Saving…', 'success');
+        saveAndSync(GIFT_KEY, giftConfig).then(function (ok) {
+          if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+          renderGiftPrices();
+          renderShop();
+          renderAdminProducts();
+          toast('Gift price removed.', 'success');
+        });
       });
     });
   }
@@ -2376,11 +2479,14 @@
       if (minVal != null && maxVal != null && minVal > maxVal) { toast('Minimum cannot exceed maximum.', 'error'); return; }
       giftConfig.minValue = minVal;
       giftConfig.maxValue = maxVal;
-      lsSet(GIFT_KEY, giftConfig);
-      renderGiftPrices();
-      renderShop();
-      renderAdminProducts();
-      toast('Gift limits saved.', 'success');
+      toast('Saving…', 'success');
+      saveAndSync(GIFT_KEY, giftConfig).then(function (ok) {
+        if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+        renderGiftPrices();
+        renderShop();
+        renderAdminProducts();
+        toast('Gift limits saved.', 'success');
+      });
     });
   }
 
@@ -2451,24 +2557,25 @@
     if (!order) return;
     if (order.status !== 'new') { toast('Order is no longer new.', 'error'); return; }
 
-    // Update via Supabase RPC (server-side, secure) or fallback to localStorage
-    var doConfirm = function () {
-      order.status = 'confirmed';
-      lsSet(ORDERS_KEY, orders);
-      renderOrders();
-      toast('Order #' + orderId.slice(-6).toUpperCase() + ' confirmed.', 'success');
-    };
-
+    // Update via Supabase RPC (server-side, secure) — await success before confirming
     if (window.__candyAuth && window.__candyAuth.setOrderStatus) {
+      toast('Confirming…', 'success');
       window.__candyAuth.setOrderStatus(orderId, 'confirmed')
         .then(function () {
-          doConfirm();
+          order.status = 'confirmed';
+          lsSet(ORDERS_KEY, orders);
+          renderOrders();
+          toast('Order #' + orderId.slice(-6).toUpperCase() + ' confirmed.', 'success');
         })
         .catch(function (err) {
           toast(err.message || 'Failed to confirm order.', 'error');
         });
     } else {
-      doConfirm();
+      // Fallback: local only
+      order.status = 'confirmed';
+      lsSet(ORDERS_KEY, orders);
+      renderOrders();
+      toast('Order #' + orderId.slice(-6).toUpperCase() + ' confirmed (local).', 'success');
     }
   });
 
@@ -2723,10 +2830,13 @@
       var dr = (site.reviews || [])[di];
       if (dr && confirm('Delete review by "' + dr.name + '"?')) {
         site.reviews.splice(di, 1);
-        lsSet(SITE_KEY, site);
-        renderReviewList();
-        renderReviews();
-        toast('Review deleted.', 'success');
+        toast('Saving…', 'success');
+        saveAndSync(SITE_KEY, site).then(function (ok) {
+          if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+          renderReviewList();
+          renderReviews();
+          toast('Review deleted.', 'success');
+        });
       }
     }
   });
@@ -2740,17 +2850,20 @@
     if (!quote) { toast('Add a short quote.', 'error'); return; }
     var entry = { name: name, role: ($('rvRole').value || '').trim(), quote: quote, stars: Math.max(1, Math.min(5, stars)) };
     if (!site.reviews) site.reviews = [];
+    var isEdit = editingReviewIdx != null && editingReviewIdx < site.reviews.length;
     if (editingReviewIdx != null && editingReviewIdx < site.reviews.length) {
       site.reviews[editingReviewIdx] = entry;
-      toast('Review updated.', 'success');
     } else {
       site.reviews.push(entry);
-      toast('Review added.', 'success');
     }
-    lsSet(SITE_KEY, site);
-    resetReviewForm();
-    renderReviewList();
-    renderReviews();
+    toast('Saving…', 'success');
+    saveAndSync(SITE_KEY, site).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      resetReviewForm();
+      renderReviewList();
+      renderReviews();
+      toast(isEdit ? 'Review updated.' : 'Review added.', 'success');
+    });
   });
 
   /* Hero image file handling */
@@ -2790,19 +2903,25 @@
     if (pendingHeroImage) site.hero.heroImage = pendingHeroImage;
     else if (url) site.hero.heroImage = url;
     else if (!site.hero.heroImage) site.hero.heroImage = DEFAULT_SITE.hero.heroImage;
-    lsSet(SITE_KEY, site);
-    pendingHeroImage = null;
-    renderSiteContent();
-    toast('Hero updated.', 'success');
+    toast('Saving…', 'success');
+    saveAndSync(SITE_KEY, site).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      pendingHeroImage = null;
+      renderSiteContent();
+      toast('Hero updated.', 'success');
+    });
   });
 
   if ($('marqueeForm')) $('marqueeForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var raw = ($('mrqText').value || '').split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
     site.marquee = raw.length ? raw : DEFAULT_SITE.marquee.slice();
-    lsSet(SITE_KEY, site);
-    renderMarquee();
-    toast('Marquee updated.', 'success');
+    toast('Saving…', 'success');
+    saveAndSync(SITE_KEY, site).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      renderMarquee();
+      toast('Marquee updated.', 'success');
+    });
   });
 
   if ($('visitForm')) $('visitForm').addEventListener('submit', function (e) {
@@ -2818,9 +2937,12 @@
     site.visit.hours = ($('vHours').value || '').trim();
     site.visit.mapSrc = ($('vMapSrc').value || '').trim();
     site.visit.instagram = ($('vInstagram').value || '').trim();
-    lsSet(SITE_KEY, site);
-    renderSiteContent();
-    toast('Visit info & Instagram updated.', 'success');
+    toast('Saving…', 'success');
+    saveAndSync(SITE_KEY, site).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      renderSiteContent();
+      toast('Visit info & Instagram updated.', 'success');
+    });
   });
 
   /* """ Theme Form """ */
@@ -2901,15 +3023,23 @@
   if ($('themeSaveBtn')) $('themeSaveBtn').addEventListener('click', function () {
     var theme = updateThemeFromInputs();
     applyTheme(theme);
-    toast('Theme saved.', 'success');
-    syncThemeInputs();
+    toast('Saving…', 'success');
+    saveAndSync(SITE_KEY, site).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      toast('Theme saved.', 'success');
+      syncThemeInputs();
+    });
   });
 
   if ($('themeResetBtn')) $('themeResetBtn').addEventListener('click', function () {
     if (confirm('Reset all colors to defaults?')) {
       resetThemeToDefaults();
-      syncThemeInputs();
-      toast('Theme reset to defaults.', 'success');
+      toast('Saving…', 'success');
+      saveAndSync(SITE_KEY, site).then(function (ok) {
+        if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+        syncThemeInputs();
+        toast('Theme reset to defaults.', 'success');
+      });
     }
   });
 
@@ -3014,11 +3144,14 @@
     var url = ($('lgLogo').value || '').trim();
     var newSrc = pendingLogo || url || DEFAULT_SITE.logo;
     site.logo = newSrc;
-    lsSet(SITE_KEY, site);
-    pendingLogo = null;
-    renderSiteContent();
-    populateLogoForm();
-    toast('Logo updated.', 'success');
+    toast('Saving…', 'success');
+    saveAndSync(SITE_KEY, site).then(function (ok) {
+      if (!ok) { toast('Not saved — please retry.', 'error'); return; }
+      pendingLogo = null;
+      renderSiteContent();
+      populateLogoForm();
+      toast('Logo updated.', 'success');
+    });
   });
 
 /* """"" Shared overlays & nav """"" */

@@ -255,34 +255,65 @@
   }
 
   /* ── 4. Write interceptor (what app.js's patched lsSet calls) ───── */
-  // Queued serially to avoid overlapping syncReplace races.
+  // Async queue so writes never interleave; each returns a promise that
+  // resolves true on success / false on failure so the caller can react.
   var syncQueue = Promise.resolve();
-  function enqueue(fn) {
-    syncQueue = syncQueue.then(function () { return fn().catch(function () {}); });
-    return syncQueue;
+  function enqueue(fn, name) {
+    var run = syncQueue.then(function () { return fn(); });
+    // Keep the chain alive even if one op throws, so later ops still run.
+    syncQueue = run.then(function () { return null; }, function () { return null; });
+    return run;
+  }
+
+  // Normalize a supabase-js result. The SDK resolves with {data, error}
+  // rather than throwing, so we must check `.error` on EVERY call.
+  function rlzErr(res, ctx) {
+    var e = (res && res.error) ? res.error : null;
+    if (e) {
+      var msg = e.message || e.details || String(e);
+      console.warn('[supabase-sync] ' + ctx + ': ' + (e.code ? e.code + ' ' : '') + msg);
+    }
+    return e;
+  }
+
+  // Report a failed save to the user in all cases (not just console).
+  function reportSaveError(ctx, e) {
+    var msg = (e && (e.message || e.details)) || String(e) || 'unknown error';
+    var friendly = msg;
+    if (/row-level security|42501|permission denied|policy/i.test(msg)) {
+      friendly = 'Permission denied saving ' + ctx + '. Are you signed in as the owner?';
+    } else if (/network|failed to fetch|load failed|offline/i.test(msg)) {
+      friendly = 'Offline — could not save ' + ctx + '. Check your connection and retry.';
+    }
+    console.warn('[supabase-sync] ' + ctx + ': ' + msg);
+    if (typeof window.__candyToast === 'function') {
+      window.__candyToast('Could not save ' + ctx + '. ' + friendly, 'error');
+    }
   }
 
   async function syncCategories(cats) {
-    // Replace-all: only the owner ever calls this path. Product-sync guards that.
-    // Do replace correctly: delete removed, upsert kept. But simpler: delete rows
-    // not in keep, then upsert incoming.
+    // Replace-all: only the owner ever calls this path.
     try {
       var incoming = (cats || []).map(function (c) {
         return { id: c.id, name: c.name, description: c.description || '', sort: 0 };
       });
       var keepIds = incoming.map(function (x) { return x.id; });
-      // Load current ids so we can delete removed categories.
       var cur = await supa.from('categories').select('id');
+      if (rlzErr(cur, 'categories read')) return false;
       var curIds = cur.data ? cur.data.map(function (r) { return r.id; }) : [];
       var toDelete = curIds.filter(function (id) { return keepIds.indexOf(id) === -1; });
-      if (toDelete.length) await supa.from('categories').delete().in('id', toDelete);
-      if (incoming.length) await supa.from('categories').upsert(incoming, { onConflict: 'id' });
-    } catch (e) {
-      if (String(e && e.message).indexOf('row-level security') !== -1 || (e && e.code === '42501')) {
-        // Expected when a non-owner writes to localStorage — just cache locally.
-        return;
+      if (toDelete.length) {
+        var del = await supa.from('categories').delete().in('id', toDelete);
+        if (rlzErr(del, 'categories delete')) return false;
       }
-      console.warn('[supabase-sync] categories sync:', e.message || e);
+      if (incoming.length) {
+        var up = await supa.from('categories').upsert(incoming, { onConflict: 'id' });
+        if (rlzErr(up, 'categories upsert')) return false;
+      }
+      return true;
+    } catch (e) {
+      reportSaveError('categories', e);
+      return false;
     }
   }
 
@@ -305,26 +336,34 @@
       });
       var keepIds = incoming.map(function (x) { return x.id; });
       var cur = await supa.from('products').select('id');
+      if (rlzErr(cur, 'products read')) return false;
       var curIds = cur.data ? cur.data.map(function (r) { return r.id; }) : [];
       var toDelete = curIds.filter(function (id) { return keepIds.indexOf(id) === -1; });
-      if (toDelete.length) await supa.from('products').delete().in('id', toDelete);
-      if (incoming.length) await supa.from('products').upsert(incoming, { onConflict: 'id' });
+      if (toDelete.length) {
+        var del = await supa.from('products').delete().in('id', toDelete);
+        if (rlzErr(del, 'products delete')) return false;
+      }
+      if (incoming.length) {
+        var up = await supa.from('products').upsert(incoming, { onConflict: 'id' });
+        if (rlzErr(up, 'products upsert')) return false;
+      }
+      return true;
     } catch (e) {
-      if (e && (e.code === '42501' || String(e.message).indexOf('row-level security') !== -1)) return;
-      console.warn('[supabase-sync] products sync:', e.message || e);
+      reportSaveError('products', e);
+      return false;
     }
   }
 
   async function syncOrders(orders) {
     try {
-      if (!Array.isArray(orders) || !orders.length) return; // empty checkout not related to persistence
-      // Only insert brand-new orders, never update existing status from the client
-      // (status changes go through the staff RPC `set_order_status`).
+      if (!Array.isArray(orders) || !orders.length) return true; // nothing to insert
+      // Insert-only: never update/deletes existing orders client-side (status is RPC-managed).
       var ids = orders.map(function (o) { return o.id; });
       var existing = await supa.from('orders').select('id').in('id', ids);
+      if (rlzErr(existing, 'orders read')) return false;
       var existingIds = existing.data ? existing.data.map(function (r) { return r.id; }) : [];
       var fresh = orders.filter(function (o) { return existingIds.indexOf(o.id) === -1; });
-      if (!fresh.length) return;
+      if (!fresh.length) return true;
       var uid = (window.__candyProfile && window.__candyProfile.id)
         || (supa.auth.getSession ? (await supa.auth.getSession()).data.session?.user?.id : null);
       var rows = fresh.map(function (o) {
@@ -349,9 +388,12 @@
           created_at: o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString()
         };
       });
-      await supa.from('orders').insert(rows);
+      var ins = await supa.from('orders').insert(rows);
+      if (rlzErr(ins, 'orders insert')) return false;
+      return true;
     } catch (e) {
-      console.warn('[supabase-sync] orders sync:', e.message || e);
+      reportSaveError('orders', e);
+      return false;
     }
   }
 
@@ -371,30 +413,31 @@
       });
       var keepCodes = incoming.map(function (x) { return x.code; });
       var cur = await supa.from('registration_keys').select('code');
+      if (rlzErr(cur, 'keys read')) return false;
       var curCodes = cur.data ? cur.data.map(function (r) { return r.code; }) : [];
       var toDelete = curCodes.filter(function (code) { return keepCodes.indexOf(code) === -1; });
       if (toDelete.length && window.__candyProfile && window.__candyProfile.role === 'owner') {
-        await supa.from('registration_keys').delete().in('code', toDelete);
+        var del = await supa.from('registration_keys').delete().in('code', toDelete);
+        if (rlzErr(del, 'keys delete')) return false;
       }
       if (incoming.length) {
-        // used_by for legacy keys was an email string — the DB column is uuid.
-        // For those, keep null so expired legacy gifts don't break; the activity
-        // trigger was already fired when the key was consumed via redeem RPC.
         incoming.forEach(function (r) {
           if (r.used_by && !/^[0-9a-f-]{36}$/i.test(String(r.used_by))) r.used_by = null;
         });
-        await supa.from('registration_keys').upsert(incoming, { onConflict: 'code' });
+        var up = await supa.from('registration_keys').upsert(incoming, { onConflict: 'code' });
+        if (rlzErr(up, 'keys upsert')) return false;
       }
+      return true;
     } catch (e) {
-      if (e && (e.code === '42501' || String(e.message).indexOf('row-level security') !== -1)) return;
-      console.warn('[supabase-sync] keys sync:', e.message || e);
+      reportSaveError('registration keys', e);
+      return false;
     }
   }
 
   async function syncSite(site) {
     try {
-      if (!site) return;
-      await supa.from('site_content').upsert({
+      if (!site) return true;
+      var up = await supa.from('site_content').upsert({
         id: 1,
         logo: site.logo || '',
         hero: site.hero || {},
@@ -403,40 +446,45 @@
         reviews: Array.isArray(site.reviews) ? site.reviews : [],
         theme: site.theme != null ? site.theme : null
       }, { onConflict: 'id' });
+      if (rlzErr(up, 'site_content upsert')) return false;
+      return true;
     } catch (e) {
-      if (e && (e.code === '42501' || String(e.message).indexOf('row-level security') !== -1)) return;
-      console.warn('[supabase-sync] site sync:', e.message || e);
+      reportSaveError('site content', e);
+      return false;
     }
   }
 
   async function syncGift(cfg) {
     try {
-      if (!cfg) return;
-      await supa.from('gift_config').upsert({
+      if (!cfg) return true;
+      var up = await supa.from('gift_config').upsert({
         id: 1,
         enabled: !!cfg.enabled,
         prices: Array.isArray(cfg.prices) ? cfg.prices : [],
         min_value: cfg.minValue != null ? cfg.minValue : null,
         max_value: cfg.maxValue != null ? cfg.maxValue : null
       }, { onConflict: 'id' });
+      if (rlzErr(up, 'gift_config upsert')) return false;
+      return true;
     } catch (e) {
-      if (e && (e.code === '42501' || String(e.message).indexOf('row-level security') !== -1)) return;
-      console.warn('[supabase-sync] gift sync:', e.message || e);
+      reportSaveError('gift config', e);
+      return false;
     }
   }
 
-  // app.js's patched lsSet calls this when __candySupabaseReady === true.
+  // Save one dataset to Supabase. Returns a Promise<boolean> (true = persisted).
+  // If the client isn't ready, resolves false so callers never assume a save.
   window.__candySync = function syncEntry(key, value) {
-    if (!window.__candySupabaseReady) return;
-    enqueue(function () {
-      if (key === 'candy_categories') return syncCategories(value);
-      if (key === 'candy_products')   return syncProducts(value);
-      if (key === 'candy_orders')     return syncOrders(value);
-      if (key === 'candy_keys')       return syncKeys(value);
-      if (key === 'candy_site')       return syncSite(value);
-      if (key === 'candy_gift_config') return syncGift(value);
-      return Promise.resolve();
-    });
+    if (!window.__candySupabaseReady) return Promise.resolve(false);
+    var fn;
+    if (key === 'candy_categories') fn = function () { return syncCategories(value); };
+    else if (key === 'candy_products') fn = function () { return syncProducts(value); };
+    else if (key === 'candy_orders') fn = function () { return syncOrders(value); };
+    else if (key === 'candy_keys') fn = function () { return syncKeys(value); };
+    else if (key === 'candy_site') fn = function () { return syncSite(value); };
+    else if (key === 'candy_gift_config') fn = function () { return syncGift(value); };
+    else return Promise.resolve(true);
+    return enqueue(fn, key);
   };
 
   /* ── 5. Auth helpers (exposed as window.__candyAuth) ───────────── */

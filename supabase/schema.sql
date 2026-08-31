@@ -193,6 +193,7 @@ alter table public.orders enable row level security;
 drop policy if exists "orders_read_own"    on public.orders;
 drop policy if exists "orders_read_staff"  on public.orders;
 drop policy if exists "orders_insert_own"  on public.orders;
+drop policy if exists "orders_insert_guest" on public.orders;
 
 create policy "orders_read_own"   on public.orders
   for select using (auth.uid() = user_id);
@@ -203,6 +204,10 @@ create policy "orders_read_staff" on public.orders
 -- Customers may insert, but RLS forces the order to belong to them.
 create policy "orders_insert_own" on public.orders
   for insert with check (auth.uid() = user_id);
+
+-- Guest checkout: allow INSERT where user_id IS NULL (anonymous orders)
+create policy "orders_insert_guest" on public.orders
+  for insert with check (user_id IS NULL);
 
 -- Order updates (status changes) go through the security definer below.
 
