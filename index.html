@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Candy Shop Boumerdès — The Art of Sweetness</title>
+  <meta name="description" content="Candy Shop Boumerdès — a premium candy & chips boutique in Boumerdès, Algeria. Gourmet candies, savoury chips & beautiful gift boxes. Rated 4.3/5. Call 0664 97 49 19." />
+  <meta property="og:title" content="Candy Shop Boumerdès — The Art of Sweetness" />
+  <meta property="og:description" content="A premium candy, chips & gifts boutique in Boumerdès. Gourmet sweets, savoury snacks & curated gift boxes. Rated 4.3/5 by our community." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=1200&auto=format&fit=crop" />
+  <link rel="icon" href="https://cdn.discordapp.com/attachments/1515105758633529454/1543275605359984751/LOGO_.png?ex=6a9446e8&is=6a92f568&hm=24b9fceb66868dfc725648b1b89dc933e1bd4122b91e56a37e9444903695269e" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body id="top">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="roseGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d88d95" />
+        <stop offset="1" stop-color="#be6e79" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- NAVIGATION -->
+  <header class="site-nav" id="siteNav">
+    <div class="nav-inner container">
+      <a href="#top" class="brand" aria-label="Candy Shop Boumerdès — home">
+        <span class="brand-mark" aria-hidden="true"><img class="brand-logo" src="https://cdn.discordapp.com/attachments/1515105758633529454/1543275605359984751/LOGO_.png?ex=6a9446e8&is=6a92f568&hm=24b9fceb66868dfc725648b1b89dc933e1bd4122b91e56a37e9444903695269e" alt="Candy Shop Boumerdès logo" /></span>
+        <span class="brand-text">Candy&nbsp;Shop <em>Boumerdès</em></span>
+      </a>
+
+      <nav class="nav-links" id="navLinks" aria-label="Primary navigation">
+        <a href="#confections">Confections</a>
+        <a href="#reviews">Reviews</a>
+        <a href="#visit">Visit Us</a>
+        <a href="tel:+213664974919" class="nav-phone">0664&nbsp;97&nbsp;49&nbsp;19</a>
+        <a href="#visit" class="btn btn-primary btn-sm nav-cta-mobile">Visit Store</a>
+      </nav>
+
+      <a href="#visit" class="btn btn-primary btn-sm nav-cta">Visit Store</a>
+        <a href="https://www.instagram.com/candy_shop_35/" target="_blank" rel="noopener noreferrer" class="nav-ig" aria-label="Instagram — @candy_shop_35" title="Follow us on Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+
+      <div class="nav-actions">
+        <button class="nav-cart" id="cartBtn" aria-label="Open shopping cart" title="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/></svg>
+          <span class="cart-count zero" id="cartCount">0</span>
+        </button>
+
+        <button class="btn btn-primary btn-sm admin-btn hidden" id="adminBtn" title="Owner dashboard">Admin Dashboard</button>
+
+        <div class="account-wrap" id="accountWrap">
+          <button class="account-btn" id="accountBtn" aria-haspopup="true" aria-expanded="false">
+            <span class="av" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <span class="account-label" id="accountLabel">Account</span>
+          </button>
+          <div class="account-drop" id="accountDrop" role="menu"></div>
+        </div>
+      </div>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <img src="https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=2000&auto=format&fit=crop" alt="" fetchpriority="high" />
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="container hero-inner">
+      <div class="hero-card glass">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Premium Candy &amp; Chips Boutique — Boumerdès</p>
+        <h1 class="hero-title">The Art<br />of <em>Sweetness</em></h1>
+        <p class="hero-sub">Gourmet candies, savoury chips and curated gift boxes — sourced with care and composed daily in the heart of Boumerdès.</p>
+        <div class="hero-actions">
+          <a href="#confections" class="btn btn-primary">
+            Visit Store
+            <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="tel:+213664974919" class="btn btn-glass">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            0664 97 49 19
+          </a>
+        </div>
+        <div class="rating-badge">
+          <div class="stars" role="img" aria-label="Rated 4.3 out of 5 stars">
+            <svg class="stars-base" viewBox="0 0 120 24" aria-hidden="true">
+              <defs><path id="starShapeB" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></defs>
+              <use href="#starShapeB" x="0"/><use href="#starShapeB" x="24"/><use href="#starShapeB" x="48"/><use href="#starShapeB" x="72"/><use href="#starShapeB" x="96"/>
+            </svg>
+            <svg class="stars-fill" viewBox="0 0 120 24" aria-hidden="true">
+              <defs><path id="starShapeF" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></defs>
+              <use href="#starShapeF" x="0"/><use href="#starShapeF" x="24"/><use href="#starShapeF" x="48"/><use href="#starShapeF" x="72"/><use href="#starShapeF" x="96"/>
+            </svg>
+          </div>
+          <div class="rating-meta">
+            <strong>4.3 / 5</strong>
+            <span>Rated by our community</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a href="#confections" class="scroll-hint" aria-label="Scroll to see the confections">
+      <span class="scroll-hint-line" aria-hidden="true"></span>
+    </a>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Gourmet Candies</span><i>&</i>
+      <span>Savory Chips</span><i>&</i>
+      <span>Curated Gifts</span><i>&</i>
+      <span>Premium Chocolates</span><i>&</i>
+      <span>Gourmet Candies</span><i>&</i>
+      <span>Savory Chips</span><i>&</i>
+      <span>Curated Gifts</span><i>&</i>
+      <span>Premium Chocolates</span><i>&</i>
+    </div>
+  </div>
+
+  <!-- CURATED COLLECTION — now a dynamic shop -->
+  <section class="confections" id="confections">
+    <div class="container">
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Curated Collection</p>
+        <h2 class="section-title">Candies, chips &amp; gifts for <em>every craving</em></h2>
+        <p class="section-lede">
+          From gourmet sweets to savoury snacks and beautifully wrapped gift boxes — everything is selected with care, never mass-produced.
+        </p>
+      </header>
+
+      <div class="shop-filters" id="shopFilters" aria-label="Filter by category"></div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </section>
+
+  <!-- CUSTOMER LOVE -->
+  <section class="reviews" id="reviews">
+    <div class="container">
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Customer Love</p>
+        <h2 class="section-title">Sweet words from <em>our community</em></h2>
+        <p class="section-lede">Real reviews from people who visit us in Boumerdès — and keep coming back for more.</p>
+      </header>
+      <div class="reviews-grid">
+        <figure class="review reveal">
+          <div class="review-stars" aria-label="5 out of 5 stars">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <blockquote class="review-quote">The macarons are the best Ive had in Algeria — light, fresh and so elegant. The boutique itself feels like a little Parisian corner.</blockquote>
+          <figcaption class="review-author">
+            <span class="review-avatar" aria-hidden="true">Y</span>
+            <span class="review-meta"><strong>Yasmine B.</strong><em>Regular customer</em></span>
+          </figcaption>
+        </figure>
+        <figure class="review reveal">
+          <div class="review-stars" aria-label="5 out of 5 stars">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <blockquote class="review-quote">Ordered a signature cake for my daughters birthday — beautiful, delicious and ready exactly on time. Truly premium service.</blockquote>
+          <figcaption class="review-author">
+            <span class="review-avatar" aria-hidden="true">A</span>
+            <span class="review-meta"><strong>Amine K.</strong><em>Birthday order</em></span>
+          </figcaption>
+        </figure>
+        <figure class="review reveal">
+          <div class="review-stars" aria-label="4 out of 5 stars">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <blockquote class="review-quote">Beautiful boutique, friendly staff and the gummies are dangerously good. A lovely spot to treat yourself in Boumerdès.</blockquote>
+          <figcaption class="review-author">
+            <span class="review-avatar" aria-hidden="true">L</span>
+            <span class="review-meta"><strong>Lina M.</strong><em>Local guide</em></span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISIT US -->
+  <section class="visit" id="visit">
+    <div class="visit-info">
+      <div class="visit-inner">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Visit Us</p>
+        <h2 class="section-title">Find us in the <em>heart of Boumerdès</em></h2>
+        <p class="visit-lede">Step inside for a coffee, a box of macarons, or a cake made just for you.</p>
+        <ul class="visit-list">
+          <li class="visit-item">
+            <span class="visit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            <div><strong>Address</strong><span>QF44+WWC, Boumerdès, Algeria</span></div>
+          </li>
+          <li class="visit-item">
+            <span class="visit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <div><strong>Phone</strong><a href="tel:+213664974919">0664 97 49 19</a></div>
+          </li>
+          <li class="visit-item">
+            <span class="visit-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </span>
+            <div><strong>Opening Hours</strong><span>Mon – Sat · 9:00 – 21:00</span></div>
+          </li>
+        </ul>
+        <div class="visit-actions">
+          <a href="tel:+213664974919" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Call the boutique
+          </a>
+          <a href="https://www.google.com/maps/search/?api=1&query=Candy+Shop+Boumerd%C3%A8s+QF44%2BWWC+Boumerd%C3%A8s+Algeria" target="_blank" rel="noopener" class="btn btn-glass">Get directions</a>
+        </div>
+      </div>
+    </div>
+    <div class="visit-map">
+      <iframe title="Map — Candy Shop Boumerdès, Boumerdès, Algeria" src="https://www.google.com/maps?q=QF44%2BWWC+Boumerd%C3%A8s+Algeria&z=15&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a href="#top" class="brand" aria-label="Candy Shop Boumerdès — back to top">
+        <span class="brand-mark" aria-hidden="true"><img class="brand-logo" src="https://cdn.discordapp.com/attachments/1515105758633529454/1543275605359984751/LOGO_.png?ex=6a9446e8&is=6a92f568&hm=24b9fceb66868dfc725648b1b89dc933e1bd4122b91e56a37e9444903695269e" alt="Candy Shop Boumerdès logo" /></span>
+        <span class="brand-text">Candy&nbsp;Shop <em>Boumerdès</em></span>
+      </a>
+      <p class="footer-tagline">A contemporary dessert boutique in the heart of Boumerdès.</p>
+      <div class="footer-bottom">
+        <span>© <span id="year">2026</span> Candy Shop Boumerdès. All rights reserved.</span>
+        <span class="footer-social">Follow us <a href="https://www.instagram.com/candy_shop_35/" target="_blank" rel="noopener noreferrer">@candy_shop_35</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="mobile-bar" aria-label="Quick contact">
+    <a href="tel:+213664974919" class="mobile-bar-call">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      Tap to Call
+    </a>
+    <a href="#visit" class="mobile-bar-visit">Visit Store</a>
+  </div>
+
+  <!-- CART PANEL -->
+  <div class="cart-backdrop" id="cartBackdrop" aria-hidden="true"></div>
+  <aside class="cart-panel" id="cartPanel" role="dialog" aria-modal="true" aria-labelledby="cartTitle" aria-hidden="true">
+    <header class="cart-head">
+      <h3 id="cartTitle">Your Cart</h3>
+      <button class="modal-close" id="cartClose" aria-label="Close cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+    </header>
+    <div class="cart-items" id="cartItems"></div>
+    <footer class="cart-foot">
+      <div class="cart-subtotal"><span>Subtotal</span><strong id="cartTotal">0 DA</strong></div>
+      <button class="btn btn-primary" id="checkoutBtn">Checkout</button>
+    </footer>
+  </aside>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal-overlay" id="modalLogin" aria-hidden="true">
+    <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="modal-close" data-close="modalLogin" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      <div class="modal-head">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Welcome back</p>
+        <h3 id="loginTitle">Login</h3>
+        <p class="modal-sub">Sign in as a member, or with your owner credentials (INVYX / 2705).</p>
+      </div>
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="loginUser">Username or Email</label>
+          <input id="loginUser" type="text" autocomplete="username" placeholder="username or gmail" required />
+        </div>
+        <div class="field">
+          <label for="loginPass">Password</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="Your password" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+      </form>
+      <p class="form-alt">New here? <a href="#" data-switch="modalRegister">Create an account</a></p>
+    </div>
+  </div>
+
+  <!-- REGISTER MODAL -->
+  <div class="modal-overlay" id="modalRegister" aria-hidden="true">
+    <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="regTitle">
+      <button class="modal-close" data-close="modalRegister" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      <div class="modal-head">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Join us</p>
+        <h3 id="regTitle">Create an account</h3>
+        <p class="modal-sub">Become a member to save your cart and order with ease.</p>
+      </div>
+      <form id="regForm" novalidate>
+        <div class="field">
+          <label for="regName">Username</label>
+          <input id="regName" type="text" autocomplete="username" placeholder="your_username" required />
+        </div>
+        <div class="field">
+          <label for="regEmail">Email</label>
+          <input id="regEmail" type="email" autocomplete="email" placeholder="yourname@gmail.com" required />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="regPass">Password</label>
+            <input id="regPass" type="password" autocomplete="new-password" placeholder="At least 6 characters" required />
+          </div>
+          <div class="field">
+            <label for="regPass2">Confirm Password</label>
+            <input id="regPass2" type="password" autocomplete="new-password" placeholder="Confirm password" required />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Create account</button>
+        </div>
+      </form>
+      <p class="form-alt">Already a member? <a href="#" data-switch="modalLogin">Login</a></p>
+    </div>
+  </div>
+
+  <!-- REDEEM KEY MODAL -->
+  <div class="modal-overlay" id="modalRedeem" aria-hidden="true">
+    <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="redeemTitle">
+      <button class="modal-close" data-close="modalRedeem" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      <div class="modal-head">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Owner access</p>
+        <h3 id="redeemTitle">Redeem an owner key</h3>
+        <p class="modal-sub">Paste the key the shop owner gave you. The key must still be active and not expired.</p>
+      </div>
+      <form id="redeemForm" novalidate>
+        <div class="field">
+          <label for="redeemKey">Owner Key</label>
+          <input id="redeemKey" type="text" placeholder="CS-XXXX-XXXX-XXXX" autocomplete="off" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Activate owner access</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CHECKOUT / DELIVERY MODAL -->
+  <div class="modal-overlay" id="modalCheckout" aria-hidden="true">
+    <div class="modal checkout-modal glass" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+      <button class="modal-close" data-close="modalCheckout" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      <div class="modal-head">
+        <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Almost there</p>
+        <h3 id="checkoutTitle">Delivery details</h3>
+        <p class="modal-sub">Tell us where to deliver and who to call. We cover all 58 wilayas of Algeria.</p>
+      </div>
+      <form id="checkoutForm" novalidate>
+        <fieldset class="delivery-fieldset">
+          <legend>Delivery place</legend>
+          <div class="delivery-options">
+            <label class="delivery-option">
+              <input type="radio" name="deliveryPlace" value="home" checked />
+              <span class="delivery-option-body">
+                <strong>Home delivery</strong>
+                <small>We deliver to a full address anywhere in Algeria</small>
+              </span>
+            </label>
+            <label class="delivery-option">
+              <input type="radio" name="deliveryPlace" value="pickup" />
+              <span class="delivery-option-body">
+                <strong>Pick up at the boutique</strong>
+                <small>Collect it yourself in Boumerdès (city centre)</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="coFullName">Full name of the person</label>
+            <input id="coFullName" type="text" autocomplete="name" placeholder="e.g. Ahmed Benali" required />
+          </div>
+          <div class="field">
+            <label for="coPhone">Phone number</label>
+            <input id="coPhone" type="tel" autocomplete="tel" placeholder="05 55 55 55 55" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="coWilaya">Wilaya (province)</label>
+            <select id="coWilaya" required><option value="">Loading…</option></select>
+          </div>
+          <div class="field">
+            <label for="coBaladia">Baladia (commune)</label>
+            <select id="coBaladia" disabled><option value="">First choose a wilaya…</option></select>
+            <input id="coBaladiaOther" type="text" autocomplete="off" placeholder="Type your commune's name…" hidden />
+          </div>
+        </div>
+
+        <div class="field" id="coAddressField">
+          <label for="coAddress">Address / street <span style="text-transform:none;font-weight:500;letter-spacing:0;">(optional)</span></label>
+          <input id="coAddress" type="text" autocomplete="street-address" placeholder="Street, house number, landmark…" />
+        </div>
+
+        <div class="field">
+          <label for="coNote">Note for the shop <span style="text-transform:none;font-weight:500;letter-spacing:0;">(optional)</span></label>
+          <textarea id="coNote" rows="2" placeholder="Gift note, preferred delivery time…"></textarea>
+        </div>
+
+        <div class="checkout-summary">
+          <div class="checkout-summary-line"><span>Items</span><strong id="coCount">0 item(s)</strong></div>
+          <div class="checkout-summary-line checkout-summary-total"><span>Subtotal</span><strong id="coTotal">0 DA</strong></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Place order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="modal-overlay admin-overlay" id="modalAdmin" aria-hidden="true">
+    <div class="admin-dash glass">
+      <header class="admin-head">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span><span id="adminRoleLabel" class="role-badge">Owner — Logged in as INVYX</span></p>
+          <h2>Admin Dashboard</h2>
+        </div>
+        <button class="modal-close" data-close="modalAdmin" aria-label="Close dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      </header>
+      <nav class="admin-tabs" aria-label="Admin sections">
+        <button class="admin-tab active" data-tab="tabProducts">Products</button>
+        <button class="admin-tab" data-tab="tabCategories">Categories</button>
+        <button class="admin-tab" data-tab="tabKeys">Access Keys</button>
+        <button class="admin-tab" data-tab="tabSite">Site Content</button>
+        <button class="admin-tab" data-tab="tabOrders">Orders</button>
+      </nav>
+      <div class="admin-body">
+
+        <!-- Dashboard Stats (shown on all tabs for owners) -->
+        <div class="admin-stats" id="adminStats" style="display:none;">
+          <article class="stat-card products">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12h-4l-3 9-3-9H4"/><circle cx="12" cy="20" r="2"/></svg></div>
+            <div class="stat-content"><div class="stat-value" id="statProducts">0</div><div class="stat-label">Products</div></div>
+          </article>
+          <article class="stat-card orders">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9-3-9H2"/><path d="M22 12V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6"/></svg></div>
+            <div class="stat-content"><div class="stat-value" id="statOrders">0</div><div class="stat-label">Total Orders</div></div>
+          </article>
+          <article class="stat-card revenue">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="stat-content"><div class="stat-value" id="statRevenue">0 DA</div><div class="stat-label">Total Revenue</div></div>
+          </article>
+          <article class="stat-card new-orders">
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+            <div class="stat-content"><div class="stat-value" id="statNewOrders">0</div><div class="stat-label">New Orders</div></div>
+          </article>
+        </div>
+
+        <!-- Products tab -->
+        <div class="admin-panel active" id="tabProducts">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">Add, edit or remove what the shop sells.</span>
+            <button class="btn btn-primary btn-sm" id="newProductBtn"> Add Product</button>
+          </div>
+
+          <form id="productForm" class="pf hidden" novalidate>
+            <div class="form-row">
+              <div class="field">
+                <label for="pName">Product Name</label>
+                <input id="pName" type="text" placeholder="e.g. Chocolate Truffles" required />
+              </div>
+              <div class="field">
+                <label for="pCat">Category</label>
+                <select id="pCat"></select>
+              </div>
+            </div>
+            <div class="form-row-3">
+              <div class="field">
+                <label for="pPrice">Price (DA)</label>
+                <input id="pPrice" type="number" min="0" step="1" placeholder="2400" required />
+              </div>
+              <div class="field">
+                <label for="pStock">Stock (leave blank = unlimited)</label>
+                <input id="pStock" type="number" min="0" step="1" placeholder="15" />
+              </div>
+              <div class="field">
+                <label for="pTag">Badge (optional)</label>
+                <input id="pTag" type="text" placeholder="e.g. Bestseller, New, Sale" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="pDesc">Description</label>
+              <textarea id="pDesc" placeholder="One or two sentences about the product…"></textarea>
+            </div>
+            <div class="field">
+              <label>Image — upload from your PC (no size limit enforced by the shop)</label>
+              <div class="dropzone" id="pDrop">
+                <input id="pFile" type="file" accept="image/*" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 14V3"/></svg>
+                <strong>Drag an image here or click to browse</strong>
+                <small>No size limit enforced by the shop — the image is stored as base64 in your browser.</small>
+                <img id="pPreview" alt="Preview" hidden />
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+                <button type="button" class="btn btn-glass btn-sm hidden" id="pRemoveImg">Remove image</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="pUrl">Or paste an image URL</label>
+              <input id="pUrl" type="url" placeholder="https://images.unsplash.com/… or any image URL" />
+              <small style="color:var(--ink-faint);font-size:0.76rem;margin-top:3px;">If you choose a file above, paste URL field is ignored. Browser localStorage has a ~5 MB cap — a very large image may warn you on save.</small>
+            </div>
+            <div class="pf-actions">
+              <button type="button" class="btn btn-glass btn-sm" id="cancelProductBtn">Cancel</button>
+              <button type="submit" class="btn btn-primary btn-sm" id="saveProductBtn">Save product</button>
+            </div>
+          </form>
+
+          <div id="productList" class="admin-list"></div>
+        </div>
+
+        <!-- Categories tab -->
+        <div class="admin-panel" id="tabCategories">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">Rename categories, add new ones, or remove ones you no longer need.</span>
+          </div>
+          <form id="catForm" class="pf" style="animation:none;" novalidate>
+            <div class="form-row">
+              <div class="field" style="margin-bottom:0">
+                <label for="cName">Category Name</label>
+                <input id="cName" type="text" placeholder="e.g. Gourmet Candies" required />
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label for="cDesc">Description</label>
+                <input id="cDesc" type="text" placeholder="Short description (optional)" />
+              </div>
+            </div>
+            <div class="pf-actions">
+              <button type="button" class="btn btn-glass btn-sm hidden" id="cancelCatBtn">Cancel</button>
+              <button type="submit" class="btn btn-primary btn-sm" id="catSubmit">Add category</button>
+            </div>
+          </form>
+          <div id="catList" class="admin-list" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Keys tab -->
+        <div class="admin-panel" id="tabKeys">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">Generate owner-role keys with a built-in expiration. Give a key to anyone you want to make an owner.</span>
+          </div>
+          <form id="kvForm" class="kv-form-panel" novalidate>
+            <div class="kv-form-grid">
+              <div class="field" style="margin-bottom:0">
+                <label for="kvExpiry">Expiration — date and time (year, month, day, hour and minute)</label>
+                <input id="kvExpiry" type="datetime-local" required />
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm" id="generateKeyBtn">Generate key</button>
+            </div>
+            <p class="kv-out" id="generateResult"></p>
+            <small style="color:var(--ink-faint);font-size:0.76rem;">Pick the year, date and time together — someone redeeming the key after that moment will be refused. Browser localStorage stores the keys.</small>
+          </form>
+          <div id="keyList" class="admin-list" style="margin-top:10px;"></div>
+
+          <!-- Employee keys section -->
+          <div class="emp-key-section" style="margin-top:32px;padding-top:24px;border-top:1px solid var(--line);">
+            <div class="site-section-head" style="margin-bottom:16px;">
+              <h3>Employee Keys</h3>
+              <p>Generate keys for staff members to give them access to view and confirm orders. Employee keys start with "EMP-".</p>
+            </div>
+            <form id="empKeyForm" class="kv-form-panel" novalidate>
+              <div class="kv-form-grid">
+                <div class="field" style="margin-bottom:0">
+                  <label for="empKeyExpiry">Expiration — date and time (year, month, day, hour and minute)</label>
+                  <input id="empKeyExpiry" type="datetime-local" required />
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" id="generateEmpKeyBtn">Generate employee key</button>
+              </div>
+              <p class="kv-out" id="empGenerateResult"></p>
+              <small style="color:var(--ink-faint);font-size:0.76rem;">Employee keys allow staff to access the Orders dashboard only.</small>
+            </form>
+            <div id="empKeyList" class="admin-list" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+        <!-- Site Content tab -->
+        <div class="admin-panel" id="tabSite">
+
+          <!-- LOGO -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Logo — brand mark</h3>
+              <p>Replace the small monogram shown beside the site name in the navigation and footer. Upload from your PC (best under 2 MB) or paste an image URL.</p>
+            </div>
+            <form id="logoForm" class="pf" novalidate>
+              <div class="field">
+                <label>Upload new logo image</label>
+                <div class="sc-image-row">
+                  <input id="lgFile" type="file" accept="image/*" />
+                  <input id="lgLogo" type="url" placeholder="Or paste an image URL (PNG/JPG/SVG)" />
+                </div>
+                <div id="lgPreviewWrap" class="sc-preview-wrap hidden">
+                  <img id="lgPreview" alt="Logo preview" style="width:64px;height:64px;object-fit:contain;" />
+                  <button type="button" id="lgClear" class="btn btn-glass btn-sm">Remove uploaded logo</button>
+                </div>
+              </div>
+              <div class="pf-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Save logo</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- HERO -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Hero — first impression</h3>
+              <p>Controls the large card on the homepage carousel: headline, eyebrow label, subtitle, background image, and the Google rating badge.</p>
+            </div>
+            <form id="heroForm" class="pf" novalidate>
+              <div class="form-row">
+                <div class="field">
+                  <label for="hEyebrow">Eyebrow label</label>
+                  <input id="hEyebrow" type="text" placeholder="e.g. Premium Candy & Chips Boutique — Boumerdès" />
+                </div>
+                <div class="field">
+                  <label for="hRating">Rating badge (shown as "X / 5")</label>
+                  <input id="hRating" type="text" placeholder="4.3" pattern="^\d(\.\d)?$" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="hTitle">Headline — main part</label>
+                  <input id="hTitle" type="text" placeholder="The Art" />
+                </div>
+                <div class="field">
+                  <label for="hTitleEm">Headline — emphasis (rose / italic)</label>
+                  <input id="hTitleEm" type="text" placeholder="Sweetness" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="hSub">Subtitle / tagline</label>
+                <textarea id="hSub" rows="2" placeholder="Gourmet candies, savoury chips and curated gift boxes&"></textarea>
+              </div>
+              <div class="field">
+                <label>Hero background image</label>
+                <p class="field-hint">Upload from your device or paste an image URL — or both (upload takes precedence on save). The image is stored in your browser (localStorage ~5 MB cap): keep the file under ~2 MB.</p>
+                <div class="sc-image-row">
+                  <input id="hImageFile" type="file" accept="image/*" />
+                  <input id="hImageUrl" type="url" placeholder="https://images.unsplash.com/& (or any image URL)" />
+                </div>
+                <div id="hImagePreviewWrap" class="sc-preview-wrap hidden">
+                  <img id="hImagePreview" alt="Hero preview" />
+                  <button type="button" id="hImageClear" class="btn btn-glass btn-sm">Remove uploaded image</button>
+                </div>
+              </div>
+              <div class="pf-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Save hero</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- MARQUEE -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Marquee — scrolling strip under the hero</h3>
+              <p>One entry per line. Shown as a seamless scrolling band. Leave everything blank to restore the defaults.</p>
+            </div>
+            <form id="marqueeForm" class="pf" novalidate>
+              <div class="field" style="margin-bottom:0">
+                <label for="mrqText">Marquee items (one per line)</label>
+                <textarea id="mrqText" rows="5" placeholder="Gourmet Candies&#10;Savory Chips&#10;Curated Gifts&#10;Premium Chocolates"></textarea>
+              </div>
+              <div class="pf-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Save marquee</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- REVIEWS -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Customer reviews</h3>
+              <p>Add, edit, or remove the testimonials shown in the "Customer Love" section. Each review shows 1–5 stars, a quote, the reviewer's name and their role.</p>
+            </div>
+            <div class="admin-toolbar" style="justify-content:flex-start">
+              <button class="btn btn-primary btn-sm" id="newReviewBtn" type="button"> Add review</button>
+              <span id="reviewCount" class="field-hint"></span>
+            </div>
+
+            <form id="reviewForm" class="pf hidden" novalidate>
+              <div class="form-row">
+                <div class="field">
+                  <label for="rvName">Name</label>
+                  <input id="rvName" type="text" placeholder="e.g. Yasmine B." />
+                </div>
+                <div class="field">
+                  <label for="rvRole">Role / subtitle</label>
+                  <input id="rvRole" type="text" placeholder="e.g. Regular customer" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="rvQuote">Quote</label>
+                <textarea id="rvQuote" rows="3" placeholder="What they said&"></textarea>
+              </div>
+              <div class="field">
+                <label for="rvStars">Stars (1–5)</label>
+                <select id="rvStars">
+                  <option value="5">★★★★★ — 5</option>
+                  <option value="4">★★★★☆ — 4</option>
+                  <option value="3">★★★☆☆ — 3</option>
+                  <option value="2">★★☆☆☆ — 2</option>
+                  <option value="1">★☆☆☆☆ — 1</option>
+                </select>
+              </div>
+              <div class="pf-actions" style="justify-content:flex-start">
+                <button type="button" class="btn btn-glass btn-sm" id="cancelReviewBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="saveReviewBtn">Save review</button>
+              </div>
+            </form>
+
+            <div id="reviewList" class="admin-list" style="margin-top:10px;"></div>
+          </section>
+
+          <!-- VISIT + INSTAGRAM -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Visit &amp; contact</h3>
+              <p>Address, phone, hours, map embed and Instagram link. The Instagram link appears in the footer; saving here updates it everywhere.</p>
+            </div>
+            <form id="visitForm" class="pf" novalidate>
+              <div class="field">
+                <label for="vEyebrow">Eyebrow</label>
+                <input id="vEyebrow" type="text" placeholder="Visit Us" />
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="vTitle1">Title — plain part</label>
+                  <input id="vTitle1" type="text" placeholder="Find us in the" />
+                </div>
+                <div class="field">
+                  <label for="vTitleEm">Title — emphasis (rose / serif)</label>
+                  <input id="vTitleEm" type="text" placeholder="heart of Boumerdès" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="vLede">Intro line under the title</label>
+                <input id="vLede" type="text" placeholder="Step inside for a coffee, a box of macarons&" />
+              </div>
+              <div class="field">
+                <label for="vAddress">Address</label>
+                <input id="vAddress" type="text" placeholder="QF44+WWC, Boumerdès, Algeria" />
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="vPhone">Phone (display)</label>
+                  <input id="vPhone" type="text" placeholder="0664 97 49 19" />
+                </div>
+                <div class="field">
+                  <label for="vPhoneHref">Phone (for the tel: link, digits + country code, no +)</label>
+                  <input id="vPhoneHref" type="text" placeholder="213664974919" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="vHours">Opening hours</label>
+                <input id="vHours" type="text" placeholder="Mon – Sat · 9:00 – 21:00" />
+              </div>
+              <div class="field">
+                <label for="vMapSrc">Google Maps embed URL</label>
+                <input id="vMapSrc" type="url" placeholder="https://www.google.com/maps/&&output=embed" />
+                <span class="field-hint">How to get it: open your store in Google Maps — Share — Embed a map — copy the <code>src</code> URL from the iframe.</span>
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label for="vInstagram">Instagram URL</label>
+                <input id="vInstagram" type="url" placeholder="https://www.instagram.com/candy_shop_35/?hl=en" />
+              </div>
+              <div class="pf-actions">
+                <button type="submit" class="btn btn-primary btn-sm">Save visit &amp; Instagram</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- THEME & COLORS -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Theme & Colors</h3>
+              <p>Customize the website color palette. Changes apply instantly and are saved to localStorage. Use the color pickers or enter hex values directly.</p>
+            </div>
+            <form id="themeForm" class="pf" novalidate>
+              <div class="form-row">
+                <div class="field">
+                  <label for="themeBg">Background (--bg)</label>
+                  <input id="themeBg" type="color" />
+                  <input id="themeBgHex" type="text" placeholder="#fdf6ee" style="margin-top:6px;width:100%;" />
+                </div>
+                <div class="field">
+                  <label for="themeBgSoft">Background Soft (--bg-soft)</label>
+                  <input id="themeBgSoft" type="color" />
+                  <input id="themeBgSoftHex" type="text" placeholder="#f4eae0" style="margin-top:6px;width:100%;" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="themeAccent">Primary Accent (--accent)</label>
+                  <input id="themeAccent" type="color" />
+                  <input id="themeAccentHex" type="text" placeholder="#d88d95" style="margin-top:6px;width:100%;" />
+                </div>
+                <div class="field">
+                  <label for="themeAccentDeep">Accent Deep (--accent-deep)</label>
+                  <input id="themeAccentDeep" type="color" />
+                  <input id="themeAccentDeepHex" type="text" placeholder="#be6e79" style="margin-top:6px;width:100%;" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="themeAccentSoft">Accent Soft (--accent-soft)</label>
+                  <input id="themeAccentSoft" type="color" />
+                  <input id="themeAccentSoftHex" type="text" placeholder="#f8e1e4" style="margin-top:6px;width:100%;" />
+                </div>
+                <div class="field">
+                  <label for="themeInk">Primary Text (--ink)</label>
+                  <input id="themeInk" type="color" />
+                  <input id="themeInkHex" type="text" placeholder="#2e2b28" style="margin-top:6px;width:100%;" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="themeInkSoft">Muted Text (--ink-soft)</label>
+                  <input id="themeInkSoft" type="color" />
+                  <input id="themeInkSoftHex" type="text" placeholder="#706862" style="margin-top:6px;width:100%;" />
+                </div>
+                <div class="field">
+                  <label for="themeInkFaint">Faint Text (--ink-faint)</label>
+                  <input id="themeInkFaint" type="color" />
+                  <input id="themeInkFaintHex" type="text" placeholder="#a49d93" style="margin-top:6px;width:100%;" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="themeLine">Border Color (--line)</label>
+                  <input id="themeLine" type="color" />
+                  <input id="themeLineHex" type="text" placeholder="rgba(46,43,40,0.09)" style="margin-top:6px;width:100%;" />
+                </div>
+                <div class="field">
+                  <label for="themeGlassBg">Glass Background (--glass-bg)</label>
+                  <input id="themeGlassBg" type="color" />
+                  <input id="themeGlassBgHex" type="text" placeholder="rgba(255,255,255,0.58)" style="margin-top:6px;width:100%;" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="themeGlassBorder">Glass Border (--glass-border)</label>
+                  <input id="themeGlassBorder" type="color" />
+                  <input id="themeGlassBorderHex" type="text" placeholder="rgba(255,255,255,0.75)" style="margin-top:6px;width:100%;" />
+                </div>
+                <div class="field">
+                  <label for="themeShadowRose">Rose Shadow (--shadow-rose)</label>
+                  <input id="themeShadowRose" type="color" />
+                  <input id="themeShadowRoseHex" type="text" placeholder="rgba(190,110,121,0.52)" style="margin-top:6px;width:100%;" />
+                </div>
+              </div>
+              <div class="pf-actions" style="justify-content:flex-start;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary btn-sm" id="themeSaveBtn">Save Theme</button>
+                <button type="button" class="btn btn-glass btn-sm" id="themeResetBtn">Reset to Defaults</button>
+                <button type="button" class="btn btn-glass btn-sm" id="themeExportBtn">Export Theme JSON</button>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="themeImportFile" type="file" accept=".json" style="display:none;" />
+                  <button type="button" class="btn btn-glass btn-sm" id="themeImportBtn">Import Theme JSON</button>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <!-- DATA MANAGEMENT -->
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Data Management</h3>
+              <p>Backup, restore, or reset all shop data (products, orders, users, settings, theme). Use with caution — these actions affect all stored data.</p>
+            </div>
+            <div class="pf" style="animation:none;">
+              <div class="admin-toolbar" style="justify-content:flex-start;margin-bottom:16px;">
+                <span id="storageStats" style="font-size:0.82rem;color:var(--ink-soft);"></span>
+              </div>
+              <div class="pf-actions" style="justify-content:flex-start;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary btn-sm" id="dataExportBtn">Export All Data (JSON)</button>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="dataImportFile" type="file" accept=".json" style="display:none;" />
+                  <button type="button" class="btn btn-glass btn-sm" id="dataImportBtn">Import Data (JSON)</button>
+                </div>
+                <button type="button" class="btn btn-glass btn-sm" id="dataClearBtn" style="background:rgba(192,57,43,0.1);border-color:rgba(192,57,43,0.3);color:#c0392b;">Clear ALL Data</button>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Orders tab -->
+        <div class="admin-panel" id="tabOrders">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">View and confirm incoming orders.</span>
+            <span id="orderStats" class="order-stats-badge"></span>
+          </div>
+          <div id="orderList" class="admin-list" style="margin-top:10px;"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* Shared reveal observer — also exposed for the dynamic shop */
+      function observeReveals(root) {
+        var scope = root || document;
+        var list = scope.querySelectorAll('.reveal:not(.in)');
+        if (!list.length) return;
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('in');
+                io.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.14, rootMargin: '0px 0px -40px 0px' });
+          list.forEach(function (el) { io.observe(el); });
+        } else {
+          list.forEach(function (el) { el.classList.add('in'); });
+        }
+      }
+      window.observeReveals = observeReveals;
+      observeReveals();
+
+      var nav = document.getElementById('siteNav');
+      var onScroll = function () { nav.classList.toggle('scrolled', window.scrollY > 12); };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      toggle.addEventListener('click', function () {
+        var open = links.classList.toggle('open');
+        toggle.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Toggle menu');
+      });
+      links.addEventListener('click', function (e) {
+        if (e.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      var year = document.getElementById('year');
+      if (year) year.textContent = new Date().getFullYear();
+    })();
+  </script>
+  <script src="wilayas.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
