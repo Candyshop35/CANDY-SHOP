@@ -40,6 +40,10 @@
         <a href="#reviews">Reviews</a>
         <a href="#visit">Visit Us</a>
         <a href="tel:+213664974919" class="nav-phone">0664&nbsp;97&nbsp;49&nbsp;19</a>
+        <button class="btn btn-glass btn-sm nav-giftbox-btn" id="navGiftBoxBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          Gift Box
+        </button>
         <a href="#visit" class="btn btn-primary btn-sm nav-cta-mobile">Visit Store</a>
       </nav>
 
@@ -466,6 +470,8 @@
         <button class="admin-tab" data-tab="tabSite">Site Content</button>
         <button class="admin-tab" data-tab="tabGifts">Gifts</button>
         <button class="admin-tab" data-tab="tabOrders">Orders</button>
+        <button class="admin-tab" data-tab="tabUsers">Users</button>
+        <button class="admin-tab" data-tab="tabActivity">Activity Log</button>
       </nav>
       <div class="admin-body">
 
@@ -1000,9 +1006,35 @@
         <div class="admin-panel" id="tabOrders">
           <div class="admin-toolbar">
             <span class="admin-toolbar-title">View and confirm incoming orders.</span>
-            <span id="orderStats" class="order-stats-badge"></span>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <span id="orderStats" class="order-stats-badge"></span>
+              <button class="btn btn-sm hidden" id="resetOrdersBtn" style="background:rgba(192,57,43,0.1);border:1.5px solid rgba(192,57,43,0.35);color:#c0392b;font-weight:700;" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                Reset Orders
+              </button>
+            </div>
           </div>
           <div id="orderList" class="admin-list" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Users tab -->
+        <div class="admin-panel" id="tabUsers">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">Manage user roles and status.</span>
+          </div>
+          <div id="usersList" class="admin-list" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Activity Log tab -->
+        <div class="admin-panel" id="tabActivity">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">Audit trail of important actions on the website.</span>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-sm" id="refreshActivityBtn">Refresh</button>
+              <span id="activityPage" style="font-size:0.85rem;color:var(--ink-soft);margin-left:auto;"></span>
+            </div>
+          </div>
+          <div id="activityList" class="admin-list" style="margin-top:10px;"></div>
         </div>
 
       </div>
@@ -1011,6 +1043,51 @@
 
   <!-- TOASTS -->
   <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- GIFT BOX BUILDER MODAL -->
+  <div class="modal-overlay giftbox-overlay" id="modalGiftBox" aria-hidden="true">
+    <div class="giftbox-builder glass" role="dialog" aria-modal="true" aria-labelledby="giftBoxTitle">
+      <header class="giftbox-head">
+        <div class="giftbox-head-left">
+          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Build Your Own</p>
+          <h3 id="giftBoxTitle">Custom Gift Box</h3>
+          <p class="modal-sub">Browse products and add them to your gift box. Choose whatever you like.</p>
+        </div>
+        <button class="modal-close" id="giftBoxClose" aria-label="Close gift box builder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>
+      </header>
+      <div class="giftbox-body">
+        <!-- Left: product browser -->
+        <div class="giftbox-products">
+          <div class="giftbox-search">
+            <input id="giftBoxSearch" type="text" placeholder="Search products…" autocomplete="off" />
+          </div>
+          <div class="shop-filters giftbox-filters" id="giftBoxFilters" aria-label="Filter by category"></div>
+          <div class="giftbox-product-grid" id="giftBoxProductGrid"></div>
+        </div>
+        <!-- Right: contents panel -->
+        <aside class="giftbox-contents">
+          <div class="giftbox-contents-header">
+            <h4>Your Gift Box</h4>
+            <span class="giftbox-count" id="giftBoxCount">0 items</span>
+          </div>
+          <div class="giftbox-items" id="giftBoxItems">
+            <div class="giftbox-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+              <p>Your gift box is empty</p>
+              <small>Browse products and tap "Add to Box"</small>
+            </div>
+          </div>
+          <div class="giftbox-footer">
+            <div class="giftbox-total">
+              <span>Gift Box Total</span>
+              <strong id="giftBoxTotal">0 DA</strong>
+            </div>
+            <button class="btn btn-primary" id="giftBoxAddToCart" disabled>Add Gift Box to Cart</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
 
   <script>
     (function () {
@@ -1064,6 +1141,9 @@
     })();
   </script>
   <script src="wilayas.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

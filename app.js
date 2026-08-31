@@ -1,6 +1,6 @@
 /* ============================================================
    Candy Shop Boumerdès — Shop, Cart, Admin & Keys
-   Vanilla JS. Data in localStorage.
+   Vanilla JS. Data in localStorage (warm cache), synced to Supabase.
    ============================================================ */
 (function () {
   'use strict';
@@ -30,6 +30,17 @@
   var SESSION_KEY = 'candy_session';
   var GIFT_KEY = 'candy_gift_config';
 
+  /* """"" Supabase-aware lsSet wrapper """"" */
+  var _originalLsSet = lsSet;
+  lsSet = function (k, v) {
+    var ok = _originalLsSet(k, v);
+    // Only sync to Supabase if the client is ready and we have write access
+    if (ok && window.__candySupabaseReady && window.__candySync) {
+      window.__candySync(k, v);
+    }
+    return ok;
+  };
+
   /* """"" Gift pricing configuration (owner-controlled) """"" */
   var DEFAULT_GIFT = {
     enabled: false,       // master toggle: is gift price-selection on?
@@ -45,58 +56,14 @@
   function isGiftEnabled() { return !!giftConfig.enabled; }
   function isGiftProduct(p) { return !!(p && p.isGift); }
 
-  /* """"" Seed """"" */
-  var cats = lsGet(CATS_KEY, null);
-  if (!cats) {
-    cats = [
-      { id: 'c1', name: 'Gourmet Candies',    description: 'Artisanal chocolates, chewy sweets and gummies.' },
-      { id: 'c2', name: 'Crunchy Chips',      description: 'Kettle-cooked and baked chips in bold flavours.' },
-      { id: 'c3', name: 'Curated Gifts',      description: 'Beautifully wrapped gift boxes for every occasion.' },
-      { id: 'c4', name: 'Premium Chocolates', description: 'Single-origin tablets and pralines, hand-finished.' },
-      { id: 'c5', name: 'Snacks',             description: 'Savoury and sweet snack bites for any craving.' },
-      { id: 'c6', name: 'Candy',              description: 'Classic and specialty candies from around the world.' },
-      { id: 'c7', name: 'Drinks',             description: 'Refreshing beverages, artisanal sodas and cold brews.' }
-    ];
-    lsSet(CATS_KEY, cats);
-  }
-
-  var products = lsGet(PRODUCTS_KEY, null);
-  if (!products) {
-    products = [
-      { id: 'p1', category: 'c1', name: 'Chocolate Truffles',     price: 2400, stock: 15, tag: 'Bestseller',  description: 'Silky, slow-crafted truffles enrobed in rich dark chocolate.', image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p2', category: 'c1', name: 'Fruit & Sour Gummies',   price:  950, stock: 30, tag: 'New',        description: 'Chewy gummies in bright fruit flavours — a shop favourite.',  image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p3', category: 'c2', name: 'Salted Kettle Chips',    price:  180, stock: 50,                     description: 'Hand-cooked chips with the perfect crunch and sea salt.', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p4', category: 'c2', name: 'Spicy Paprika Chips',    price:  220, stock: 45,                     description: 'Bold, smoky paprika with a gentle kick. Addictive.',      image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p5', category: 'c3', name: 'Signature Cake Box',     price: 5600, stock:  8, tag: 'Most Given', description: 'A show-stopping box featuring our best-loved compositions.', image: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p6', category: 'c3', name: 'Friendship Gift Box',    price: 4200, stock: 12,                     description: 'A thoughtful mix of treats, wrapped beautifully for sharing.', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p7', category: 'c4', name: 'Dark 70% Single-Origin', price: 1800, stock: 20,                     description: 'Bold single-origin tablet — deep cocoa with fruit notes.',  image: 'https://images.unsplash.com/photo-1481391319762-47dff72954d9?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p8', category: 'c4', name: 'Handcrafted Pralines',   price: 2600, stock: 16, tag: 'Signature',  description: 'Pralines finished by hand — the crown of our range.',      image: 'https://images.unsplash.com/photo-1599599810694-b5b37304c041?q=80&w=1000&auto=format&fit=crop' },
-      // Snacks (c5)
-      { id: 'p9', category: 'c5', name: 'Mixed Nuts Deluxe',      price:  850, stock: 40, tag: 'New',        description: 'Premium roasted nuts with sea salt and herbs.', image: 'https://images.unsplash.com/photo-1508747703725-719777637510?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p10', category: 'c5', name: 'Spicy Trail Mix',       price:  950, stock: 35,                    description: 'Nuts, seeds, and dried fruit with a kick of chili.', image: 'https://images.unsplash.com/photo-1597578465468-3a5c7b9a5c7b?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p11', category: 'c5', name: 'Cheese Crisps',         price:  650, stock: 60,                    description: 'Baked 100% cheese crisps — keto friendly and crunchy.', image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p12', category: 'c5', name: 'Sea Salt Popcorn',      price:  450, stock: 80,                    description: 'Light and fluffy popcorn with fine sea salt.', image: 'https://images.unsplash.com/photo-1578849278619-e73541694434?q=80&w=1000&auto=format&fit=crop' },
-      // Candy (c6)
-      { id: 'p13', category: 'c6', name: 'Sour Belt Candy',       price:  550, stock: 100, tag: 'Bestseller', description: 'Tangy sour belts in rainbow flavors.', image: 'https://images.unsplash.com/photo-1582058091401-f87a2e55a40f?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p14', category: 'c6', name: 'Licorice Twists',       price:  650, stock: 50,                    description: 'Classic black licorice twists — authentic taste.', image: 'https://images.unsplash.com/photo-1559339352-11d035aa65ef?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p15', category: 'c6', name: 'Peppermint Candies',    price:  450, stock: 80,                    description: 'Refreshing peppermint hard candies in a tin.', image: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p16', category: 'c6', name: 'Caramel Chews',         price:  750, stock: 60, tag: 'New',        description: 'Soft, buttery caramel chews wrapped individually.', image: 'https://images.unsplash.com/photo-1559339352-11d035aa65ef?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p17', category: 'c6', name: 'Jelly Beans Mix',       price:  850, stock: 45,                    description: 'Assorted gourmet jelly beans — 20+ flavors.', image: 'https://images.unsplash.com/photo-1582058091401-f87a2e55a40f?q=80&w=1000&auto=format&fit=crop' },
-      // Drinks (c7)
-      { id: 'p18', category: 'c7', name: 'Artisanal Cola',        price:  650, stock: 30, tag: 'New',        description: 'Small-batch cola with natural cane sugar and spices.', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p19', category: 'c7', name: 'Sparkling Lemonade',     price:  550, stock: 40,                    description: 'Fresh-pressed lemons with a gentle sparkle.', image: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p20', category: 'c7', name: 'Cold Brew Coffee',      price:  1200, stock: 25, tag: 'Bestseller', description: 'Steeped 18 hours — smooth, chocolatey, low acidity.', image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p21', category: 'c7', name: 'Kombucha Variety Pack',  price:  2400, stock: 15,                  description: '4 flavors: ginger, berry, citrus, original.', image: 'https://images.unsplash.com/photo-1581453904507-626f3b5e0b5e?q=80&w=1000&auto=format&fit=crop' },
-      { id: 'p22', category: 'c7', name: 'Herbal Iced Tea',       price:  480, stock: 50,                    description: 'Hibiscus, mint, and lemongrass — naturally caffeine-free.', image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?q=80&w=1000&auto=format&fit=crop' }
-    ];
-    lsSet(PRODUCTS_KEY, products);
-  }
-
-  var cart   = lsGet(CART_KEY, []);
-  var keys   = lsGet(KEYS_KEY, []);
-  var orders = lsGet(ORDERS_KEY, []);
-  var users  = lsGet(USERS_KEY, []);
-  var session = lsGet(SESSION_KEY, null);
+  /* """"" Load from localStorage cache (warmed by supabase-sync.js) """"" */
+  var cats      = lsGet(CATS_KEY, []);
+  var products  = lsGet(PRODUCTS_KEY, []);
+  var cart      = lsGet(CART_KEY, []);
+  var keys      = lsGet(KEYS_KEY, []);
+  var orders    = lsGet(ORDERS_KEY, []);
+  var users     = lsGet(USERS_KEY, []);
+  var session   = lsGet(SESSION_KEY, null);
 
   /* """"" Editable site content (owner-controlled) """"" */
   var DEFAULT_SITE = {
@@ -493,7 +460,23 @@
       else if (action === 'register') { closeModalOverlays(); openModal('modalRegister'); }
       else if (action === 'admin') { closeModalOverlays(); openAdmin(); }
       else if (action === 'redeem') { closeModalOverlays(); openModal('modalRedeem'); }
-      else if (action === 'logout') { session = null; lsSet(SESSION_KEY, null); buildAccountMenu(); toast('Logged out.', 'success'); }
+      else if (action === 'logout') {
+        if (window.__candyAuth && window.__candyAuth.signOut) {
+          window.__candyAuth.signOut().then(function () {
+            session = null;
+            lsSet(SESSION_KEY, null);
+            buildAccountMenu();
+            toast('Logged out.', 'success');
+          }).catch(function (err) {
+            toast(err.message || 'Logout failed.', 'error');
+          });
+        } else {
+          session = null;
+          lsSet(SESSION_KEY, null);
+          buildAccountMenu();
+          toast('Logged out.', 'success');
+        }
+      }
     });
   }
   setupAccountDropDelegation();
@@ -507,6 +490,7 @@
       var pass = $('loginPass').value;
       if (!rawUser || !pass) { toast('Fill in all login fields.', 'error'); return; }
 
+      // Hardcoded owner fallback (for backward compatibility)
       if (rawUser.toUpperCase() === 'INVYX' && pass === '2705') {
         session = { name: 'INVYX', email: 'invyx@owner.local', role: 'owner' };
         lsSet(SESSION_KEY, session);
@@ -516,15 +500,34 @@
         return;
       }
 
-      var u = findUser(rawUser.toLowerCase());
-      if (u && u.password === pass) {
-        session = { name: u.name, email: u.email, role: u.role || 'customer' };
-        lsSet(SESSION_KEY, session);
-        closeModalOverlays();
-        buildAccountMenu();
-        toast('Welcome back, ' + u.name.split(' ')[0] + '!', 'success');
+      // Use Supabase Auth for login
+      if (window.__candyAuth && window.__candyAuth.signIn) {
+        window.__candyAuth.signIn(rawUser, pass)
+          .then(function (data) {
+            closeModalOverlays();
+            buildAccountMenu();
+            // The profile is loaded by the auth handler
+            if (window.__candyProfile) {
+              toast('Welcome back, ' + window.__candyProfile.name.split(' ')[0] + '!', 'success');
+            } else {
+              toast('Welcome back!', 'success');
+            }
+          })
+          .catch(function (err) {
+            toast(err.message || 'Incorrect credentials — check your email and password.', 'error');
+          });
       } else {
-        toast('Incorrect credentials — check your email and password.', 'error');
+        // Fallback to legacy localStorage auth
+        var u = findUser(rawUser.toLowerCase());
+        if (u && u.password === pass) {
+          session = { name: u.name, email: u.email, role: u.role || 'customer' };
+          lsSet(SESSION_KEY, session);
+          closeModalOverlays();
+          buildAccountMenu();
+          toast('Welcome back, ' + u.name.split(' ')[0] + '!', 'success');
+        } else {
+          toast('Incorrect credentials — check your email and password.', 'error');
+        }
       }
     });
   }
@@ -543,14 +546,32 @@
       if (p1 !== p2) { toast('Passwords do not match.', 'error'); return; }
       if (findUser(email)) { toast('This email is already registered. Try logging in.', 'error'); return; }
 
-      var user = { id: uid('u'), name: name, email: email, password: p1, role: 'customer', createdAt: Date.now() };
-      users.push(user);
-      lsSet(USERS_KEY, users);
-      session = { name: user.name, email: user.email, role: 'customer' };
-      lsSet(SESSION_KEY, session);
-      closeModalOverlays();
-      buildAccountMenu();
-      toast('Account created — welcome ' + user.name.split(' ')[0] + '!', 'success');
+      // Use Supabase Auth for registration
+      if (window.__candyAuth && window.__candyAuth.signUp) {
+        window.__candyAuth.signUp(name, email, p1)
+          .then(function (data) {
+            closeModalOverlays();
+            buildAccountMenu();
+            if (window.__candyProfile) {
+              toast('Account created — welcome ' + window.__candyProfile.name.split(' ')[0] + '!', 'success');
+            } else {
+              toast('Account created! Please check your email to confirm.', 'success');
+            }
+          })
+          .catch(function (err) {
+            toast(err.message || 'Registration failed. Please try again.', 'error');
+          });
+      } else {
+        // Fallback to legacy localStorage registration
+        var user = { id: uid('u'), name: name, email: email, password: p1, role: 'customer', createdAt: Date.now() };
+        users.push(user);
+        lsSet(USERS_KEY, users);
+        session = { name: user.name, email: user.email, role: 'customer' };
+        lsSet(SESSION_KEY, session);
+        closeModalOverlays();
+        buildAccountMenu();
+        toast('Account created — welcome ' + user.name.split(' ')[0] + '!', 'success');
+      }
     });
   }
 
@@ -562,31 +583,53 @@
       if (session.role === 'owner' || session.role === 'employee') { toast('You already have staff access.', 'error'); return; }
       var raw = $('redeemKey').value.trim().toUpperCase().replace(/\s+/g, '');
       if (!raw) { toast('Paste a key to activate.', 'error'); return; }
-      var found = keys.find(function (k) { return k.code === raw; });
-      if (!found) { toast('This key does not exist.', 'error'); return; }
-      if (found.revoked) { toast('This key has been revoked.', 'error'); return; }
-      if (found.used) { toast('This key has already been used.', 'error'); return; }
-      if (found.expiresAt <= Date.now()) { toast('This key has expired.', 'error'); return; }
 
-      var keyType = found.type || 'owner'; // back-compat: old keys default to owner
-      found.used = true;
-      found.usedBy = session.email;
-      found.usedAt = Date.now();
-      lsSet(KEYS_KEY, keys);
-      session.role = keyType;
-      lsSet(SESSION_KEY, session);
-
-      var u = findUser(session.email);
-      if (u) { u.role = keyType; lsSet(USERS_KEY, users); }
-
-      closeModalOverlays();
-      buildAccountMenu();
-      renderKeys();
-      renderEmpKeys();
-      if (keyType === 'owner') {
-        toast('Owner access activated — the Admin Dashboard is now available.', 'success');
+      // Use Supabase RPC for secure key redemption (server-side validation)
+      if (window.__candyAuth && window.__candyAuth.redeemKey) {
+        window.__candyAuth.redeemKey(raw)
+          .then(function (keyType) {
+            // Reload keys and re-render
+            renderKeys();
+            renderEmpKeys();
+            closeModalOverlays();
+            buildAccountMenu();
+            if (keyType === 'owner') {
+              toast('Owner access activated — the Admin Dashboard is now available.', 'success');
+            } else {
+              toast('Employee access activated — you can now view and confirm orders.', 'success');
+            }
+          })
+          .catch(function (err) {
+            toast(err.message || 'Invalid or expired key.', 'error');
+          });
       } else {
-        toast('Employee access activated — you can now view and confirm orders.', 'success');
+        // Fallback to legacy localStorage key redemption
+        var found = keys.find(function (k) { return k.code === raw; });
+        if (!found) { toast('This key does not exist.', 'error'); return; }
+        if (found.revoked) { toast('This key has been revoked.', 'error'); return; }
+        if (found.used) { toast('This key has already been used.', 'error'); return; }
+        if (found.expiresAt <= Date.now()) { toast('This key has expired.', 'error'); return; }
+
+        var keyType = found.type || 'owner';
+        found.used = true;
+        found.usedBy = session.email;
+        found.usedAt = Date.now();
+        lsSet(KEYS_KEY, keys);
+        session.role = keyType;
+        lsSet(SESSION_KEY, session);
+
+        var u = findUser(session.email);
+        if (u) { u.role = keyType; lsSet(USERS_KEY, users); }
+
+        closeModalOverlays();
+        buildAccountMenu();
+        renderKeys();
+        renderEmpKeys();
+        if (keyType === 'owner') {
+          toast('Owner access activated — the Admin Dashboard is now available.', 'success');
+        } else {
+          toast('Employee access activated — you can now view and confirm orders.', 'success');
+        }
       }
     });
   }
@@ -594,7 +637,13 @@
   /* """"" Cart """"" */
   function cartItem(id) { return cart.find(function (x) { return x.id === id; }); }
   function cartQty() { return cart.reduce(function (s, x) { return s + x.qty; }, 0); }
-  function cartTotalAmt() { return cart.reduce(function (s, x) { var p = product(x.id); return s + (p ? p.price * x.qty : 0); }, 0); }
+  function cartTotalAmt() {
+    return cart.reduce(function (s, x) {
+      if (isGiftBoxItem(x)) return s + (x.total || 0);
+      var p = product(x.id);
+      return s + (p ? p.price * x.qty : 0);
+    }, 0);
+  }
 
   function addToCart(id, qty) {
     var p = product(id);
@@ -612,9 +661,15 @@
   function setQty(id, qty) {
     var it = cartItem(id);
     if (!it) return;
-    var p = product(id);
-    if (qty <= 0) cart = cart.filter(function (x) { return x.id !== id; });
-    else it.qty = (p && p.stock != null) ? Math.min(qty, p.stock) : qty;
+    if (isGiftBoxItem(it)) {
+      // Gift box items: only allow remove (qty <= 0) or keep at 1+
+      if (qty <= 0) cart = cart.filter(function (x) { return x.id !== id; });
+      else it.qty = qty;
+    } else {
+      var p = product(id);
+      if (qty <= 0) cart = cart.filter(function (x) { return x.id !== id; });
+      else it.qty = (p && p.stock != null) ? Math.min(qty, p.stock) : qty;
+    }
     lsSet(CART_KEY, cart);
     renderCartBadge();
     renderCart();
@@ -653,6 +708,25 @@
     checkoutBtn.style.opacity = '1';
     checkoutBtn.style.pointerEvents = '';
     cartItems.innerHTML = cart.map(function (entry) {
+      // Custom gift box item
+      if (isGiftBoxItem(entry)) {
+        var gbItems = (entry.items || []).map(function (gi) {
+          return '<span>' + esc(gi.name) + (gi.qty > 1 ? ' ×' + gi.qty : '') + '</span>';
+        }).join('');
+        return (
+          '<div class="cart-line cart-line-giftbox">' +
+            '<img src="' + esc(entry.image || '') + '" alt="Custom Gift Box" loading="lazy">' +
+            '<div class="cart-line-body">' +
+              '<div class="giftbox-badge">🎁 Gift Box</div>' +
+              '<h4>Custom Gift Box</h4>' +
+              '<div class="cart-line-items">' + gbItems + '</div>' +
+              '<div class="cart-line-qty"><button data-cq="gb-dec" data-id="' + esc(entry.id) + '" aria-label="Remove gift box">−</button><span>' + entry.qty + '</span><button data-cq="gb-inc" data-id="' + esc(entry.id) + '" aria-label="Increase gift box quantity">+</button></div>' +
+            '</div>' +
+            '<div class="cart-line-right"><strong class="line-total">' + fmt(entry.total || 0) + '</strong><button class="cart-remove" data-rm="' + esc(entry.id) + '" aria-label="Remove gift box">—</button></div>' +
+          '</div>'
+        );
+      }
+      // Regular product
       var p = product(entry.id);
       if (!p) return '';
       return (
@@ -708,6 +782,297 @@
     }
     var rm = e.target.closest('[data-rm]');
     if (rm) removeFromCart(rm.getAttribute('data-rm'));
+  });
+
+  /* """"" Custom Gift Box Builder """"" */
+  var giftBox = [];  // [{id, qty}] — items selected for the custom gift box
+  var GIFTBOX_PREFIX = 'giftbox_';
+  var giftBoxCat = 'all';
+  var giftBoxSearch = '';
+
+  function isGiftBoxItem(cartEntry) {
+    return cartEntry && cartEntry.id && cartEntry.id.indexOf(GIFTBOX_PREFIX) === 0;
+  }
+
+  function giftBoxProduct(pid) {
+    return product(pid);
+  }
+
+  function giftBoxFind(pid) {
+    return giftBox.find(function (x) { return x.id === pid; });
+  }
+
+  function addToGiftBox(pid, qty) {
+    qty = Math.max(1, qty | 0);
+    var p = giftBoxProduct(pid);
+    if (!p) return;
+    if (p.stock != null && p.stock <= 0) { toast('This item is sold out.', 'error'); return; }
+    var it = giftBoxFind(pid);
+    var max = (p.stock != null ? p.stock : 9999);
+    if (it) {
+      it.qty = Math.min(it.qty + qty, max);
+    } else {
+      giftBox.push({ id: pid, qty: Math.min(qty, max) });
+    }
+    renderGiftBoxContents();
+    renderGiftBoxGrid();
+  }
+
+  function setGiftBoxItemQty(pid, qty) {
+    var it = giftBoxFind(pid);
+    if (!it) return;
+    if (qty <= 0) {
+      giftBox = giftBox.filter(function (x) { return x.id !== pid; });
+    } else {
+      var p = giftBoxProduct(pid);
+      it.qty = (p && p.stock != null) ? Math.min(qty, p.stock) : qty;
+    }
+    renderGiftBoxContents();
+    renderGiftBoxGrid();
+  }
+
+  function removeFromGiftBox(pid) {
+    giftBox = giftBox.filter(function (x) { return x.id !== pid; });
+    renderGiftBoxContents();
+    renderGiftBoxGrid();
+  }
+
+  function giftBoxTotal() {
+    return giftBox.reduce(function (s, x) {
+      var p = giftBoxProduct(x.id);
+      return s + (p ? p.price * x.qty : 0);
+    }, 0);
+  }
+
+  function giftBoxItemCount() {
+    return giftBox.reduce(function (s, x) { return s + x.qty; }, 0);
+  }
+
+  function renderGiftBoxContents() {
+    var host = $('giftBoxItems');
+    var countEl = $('giftBoxCount');
+    var totalEl = $('giftBoxTotal');
+    var addBtn = $('giftBoxAddToCart');
+    if (!host) return;
+
+    if (!giftBox.length) {
+      host.innerHTML =
+        '<div class="giftbox-empty">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>' +
+        '<p>Your gift box is empty</p>' +
+        '<small>Browse products and tap "Add to Box"</small>' +
+        '</div>';
+      if (countEl) countEl.textContent = '0 items';
+      if (totalEl) totalEl.textContent = '0 DA';
+      if (addBtn) { addBtn.disabled = true; addBtn.style.opacity = '0.5'; addBtn.style.pointerEvents = 'none'; }
+      return;
+    }
+
+    var totalItems = giftBoxItemCount();
+    if (countEl) countEl.textContent = totalItems + ' item' + (totalItems !== 1 ? 's' : '');
+    if (totalEl) totalEl.textContent = fmt(giftBoxTotal());
+    if (addBtn) { addBtn.disabled = false; addBtn.style.opacity = '1'; addBtn.style.pointerEvents = ''; }
+
+    host.innerHTML = giftBox.map(function (entry) {
+      var p = giftBoxProduct(entry.id);
+      if (!p) return '';
+      return (
+        '<div class="giftbox-item" data-gbpid="' + esc(entry.id) + '">' +
+          '<img class="giftbox-item-img" src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">' +
+          '<div class="giftbox-item-info">' +
+            '<div class="giftbox-item-name">' + esc(p.name) + '</div>' +
+            '<div class="giftbox-item-price">' + fmt(p.price) + ' each</div>' +
+          '</div>' +
+          '<div class="giftbox-item-qty">' +
+            '<button data-gbq="dec" data-gbid="' + esc(entry.id) + '" aria-label="Decrease">−</button>' +
+            '<span>' + entry.qty + '</span>' +
+            '<button data-gbq="inc" data-gbid="' + esc(entry.id) + '" aria-label="Increase">+</button>' +
+          '</div>' +
+          '<div class="giftbox-item-total">' + fmt(p.price * entry.qty) + '</div>' +
+          '<button class="giftbox-item-remove" data-gbrm="' + esc(entry.id) + '" aria-label="Remove">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
+          '</button>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderGiftBoxGrid() {
+    var host = $('giftBoxProductGrid');
+    if (!host) return;
+
+    var filtered = products.filter(function (p) {
+      if (giftBoxCat !== 'all' && p.category !== giftBoxCat) return false;
+      if (giftBoxSearch) {
+        var q = giftBoxSearch.toLowerCase();
+        var hay = (p.name + ' ' + (p.description || '') + ' ' + catName(p.category)).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    if (!filtered.length) {
+      host.innerHTML = '<p class="shop-empty" style="grid-column:1/-1;padding:30px 10px;">No products found.</p>';
+      return;
+    }
+
+    host.innerHTML = filtered.map(function (p) {
+      var sold = (p.stock != null && p.stock <= 0);
+      var low = (p.stock != null && p.stock > 0 && p.stock <= 5);
+      var inBox = giftBoxFind(p.id);
+      var inBoxQty = inBox ? inBox.qty : 0;
+
+      var addBtnLabel = sold ? 'Sold out' : (inBox ? 'In Box (' + inBoxQty + ')' : 'Add to Box');
+      var addBtnClass = 'giftbox-add-btn' + (inBox ? ' added' : '');
+
+      return (
+        '<div class="giftbox-card' + (sold ? ' soldout' : '') + '" data-gbpid="' + esc(p.id) + '">' +
+          '<img class="giftbox-card-img" src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">' +
+          '<div class="giftbox-card-body">' +
+            '<div class="giftbox-card-name">' + esc(p.name) + '</div>' +
+            '<div class="giftbox-card-price">' + fmt(p.price) + '</div>' +
+            '<div class="giftbox-card-actions">' +
+              '<div class="giftbox-card-stepper">' +
+                '<button data-gbs="dec" data-gbid="' + esc(p.id) + '">−</button>' +
+                '<span data-gbqspan="' + esc(p.id) + '">1</span>' +
+                '<button data-gbs="inc" data-gbid="' + esc(p.id) + '">+</button>' +
+              '</div>' +
+              '<button class="' + addBtnClass + '" data-gbadd="' + esc(p.id) + '"' + (sold ? ' disabled' : '') + '>' + addBtnLabel + '</button>' +
+            '</div>' +
+            (low ? '<div class="giftbox-card-stock">Only ' + p.stock + ' left!</div>' : (sold ? '<div class="giftbox-card-stock">Sold out</div>' : '')) +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderGiftBoxFilters() {
+    var host = $('giftBoxFilters');
+    if (!host) return;
+    host.innerHTML =
+      '<button class="chip' + (giftBoxCat === 'all' ? ' active' : '') + '" data-gbcat="all">All</button>' +
+      cats.map(function (c) {
+        return '<button class="chip' + (giftBoxCat === c.id ? ' active' : '') + '" data-gbcat="' + esc(c.id) + '">' + esc(c.name) + '</button>';
+      }).join('');
+  }
+
+  function openGiftBoxBuilder() {
+    giftBoxCat = 'all';
+    giftBoxSearch = '';
+    renderGiftBoxFilters();
+    renderGiftBoxGrid();
+    renderGiftBoxContents();
+    var searchInput = $('giftBoxSearch');
+    if (searchInput) searchInput.value = '';
+    openModal('modalGiftBox');
+  }
+
+  function closeGiftBoxBuilder() {
+    var overlay = $('modalGiftBox');
+    if (overlay) overlay.classList.remove('open');
+    syncScroll();
+  }
+
+  // --- Gift box builder event wiring ---
+  document.addEventListener('click', function (e) {
+    // Nav button
+    if (e.target.closest('#navGiftBoxBtn')) {
+      openGiftBoxBuilder();
+      return;
+    }
+    // Close button
+    if (e.target.closest('#giftBoxClose')) {
+      closeGiftBoxBuilder();
+      return;
+    }
+    // Filter chips
+    var gbCatBtn = e.target.closest('[data-gbcat]');
+    if (gbCatBtn) {
+      giftBoxCat = gbCatBtn.getAttribute('data-gbcat');
+      renderGiftBoxFilters();
+      renderGiftBoxGrid();
+      return;
+    }
+    // Stepper in product grid
+    var gbs = e.target.closest('[data-gbs]');
+    if (gbs) {
+      var spanEl = document.querySelector('[data-gbqspan="' + gbs.getAttribute('data-gbid') + '"]');
+      if (spanEl) {
+        var v = parseInt(spanEl.textContent, 10) || 1;
+        v += (gbs.getAttribute('data-gbs') === 'inc' ? 1 : -1);
+        spanEl.textContent = String(Math.max(1, v));
+      }
+      return;
+    }
+    // Add to box button
+    var gbAdd = e.target.closest('[data-gbadd]');
+    if (gbAdd) {
+      var pid = gbAdd.getAttribute('data-gbadd');
+      var card = gbAdd.closest('.giftbox-card');
+      var qtySpan = card ? card.querySelector('[data-gbqspan]') : null;
+      var qty = qtySpan ? (parseInt(qtySpan.textContent, 10) || 1) : 1;
+      addToGiftBox(pid, qty);
+      if (qtySpan) qtySpan.textContent = '1';
+      gbAdd.textContent = 'Added ✓';
+      gbAdd.classList.add('added');
+      return;
+    }
+    // Quantity buttons in contents panel
+    var gbq = e.target.closest('[data-gbq]');
+    if (gbq) {
+      var gid = gbq.getAttribute('data-gbid');
+      var git = giftBoxFind(gid);
+      if (git) {
+        setGiftBoxItemQty(gid, git.qty + (gbq.getAttribute('data-gbq') === 'inc' ? 1 : -1));
+      }
+      return;
+    }
+    // Remove button in contents panel
+    var gbrm = e.target.closest('[data-gbrm]');
+    if (gbrm) {
+      removeFromGiftBox(gbrm.getAttribute('data-gbrm'));
+      return;
+    }
+  });
+
+  // Search input in gift box builder
+  document.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'giftBoxSearch') {
+      giftBoxSearch = e.target.value.trim();
+      renderGiftBoxGrid();
+    }
+  });
+
+  // Add gift box to cart
+  if ($('giftBoxAddToCart')) $('giftBoxAddToCart').addEventListener('click', function () {
+    if (!giftBox.length) { toast('Your gift box is empty.', 'error'); return; }
+    var items = giftBox.map(function (entry) {
+      var p = giftBoxProduct(entry.id);
+      if (!p) return null;
+      return { id: p.id, name: p.name, price: p.price, qty: entry.qty, image: p.image };
+    }).filter(Boolean);
+    if (!items.length) return;
+    var total = giftBoxTotal();
+    var count = giftBoxItemCount();
+    var boxId = GIFTBOX_PREFIX + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var firstImg = items[0] ? items[0].image : '';
+    var names = items.map(function (x) { return x.qty > 1 ? x.name + ' ×' + x.qty : x.name; }).join(', ');
+    cart.push({
+      id: boxId,
+      type: 'customGiftBox',
+      qty: 1,
+      items: items,
+      total: total,
+      name: 'Custom Gift Box',
+      description: names,
+      image: firstImg
+    });
+    lsSet(CART_KEY, cart);
+    giftBox = [];
+    renderCartBadge();
+    renderCart();
+    closeGiftBoxBuilder();
+    toast('Gift box added to cart — ' + count + ' item(s) · ' + fmt(total), 'success');
   });
 
   /* """"" Delivery checkout """"" */
@@ -965,6 +1330,20 @@
 
     // Build order record — gift items carry selectedGiftPrice/currency/type.
     var orderItems = cart.map(function (entry) {
+      // Custom gift box: preserve full contents
+      if (isGiftBoxItem(entry)) {
+        return {
+          id: entry.id,
+          name: 'Custom Gift Box',
+          price: entry.total || 0,
+          qty: entry.qty,
+          image: entry.image || '',
+          type: 'customGiftBox',
+          items: (entry.items || []).map(function (gi) {
+            return { id: gi.id, name: gi.name, price: gi.price, qty: gi.qty, image: gi.image };
+          })
+        };
+      }
       var p = product(entry.id);
       if (!p) return null;
       var isGiftLine = isGiftOrder && giftModeItems.indexOf(entry.id) !== -1;
@@ -1004,6 +1383,11 @@
       order.selectedGiftPrice = giftPriceChoice;
       order.currency = 'DZD';
       order.hasGifts = true;
+    }
+    // Mark order if it contains custom gift boxes
+    var hasCustomGiftBox = orderItems.some(function (it) { return it.type === 'customGiftBox'; });
+    if (hasCustomGiftBox) {
+      order.hasCustomGiftBox = true;
     }
 
     orders.unshift(order);
@@ -1231,6 +1615,9 @@
         }
       }
 
+      // Sync owner-only Reset Orders button visibility
+      syncResetOrdersBtn();
+
       if (isOwner()) {
         // Owner sees all tabs and stats
         var statsEl = $('adminStats');
@@ -1257,6 +1644,8 @@
           var activeTabId = activeTab.getAttribute('data-tab');
           if (activeTabId === 'tabOrders') renderOrders();
           if (activeTabId === 'tabGifts') renderGiftAdmin();
+          if (activeTabId === 'tabUsers') renderUsersTab();
+          if (activeTabId === 'tabActivity') renderActivityTab();
         }
       } else if (isEmployee()) {
         // Employee only sees Orders tab and stats
@@ -1324,6 +1713,11 @@
         toast('Employees can only access the Orders tab.', 'error');
         return;
       }
+      // Only owners can access Users and Activity tabs
+      if ((id === 'tabUsers' || id === 'tabActivity') && !isOwner()) {
+        toast('Owner access required.', 'error');
+        return;
+      }
       document.querySelectorAll('.admin-tab').forEach(function (x) {
         x.classList.toggle('active', x === t);
       });
@@ -1336,6 +1730,8 @@
       if (id === 'tabSite')       renderSiteTab();
       if (id === 'tabGifts')      renderGiftAdmin();
       if (id === 'tabOrders')     renderOrders();
+      if (id === 'tabUsers')      renderUsersTab();
+      if (id === 'tabActivity')   renderActivityTab();
     });
   });
 
@@ -1983,6 +2379,19 @@
     host.innerHTML = list.map(function (o) {
       var statusInfo = orderStatusLabel(o.status);
       var itemsHtml = o.items.map(function (it) {
+        // Custom gift box: show detailed contents
+        if (it.type === 'customGiftBox') {
+          var gbDetail = (it.items || []).map(function (gi) {
+            return '<span><strong>' + esc(gi.name) + '</strong> × ' + gi.qty + ' — ' + fmt(gi.price * gi.qty) + '</span>';
+          }).join('');
+          return '<div class="order-item order-item-giftbox">' +
+            '<div class="order-item-info">' +
+              '<div class="order-giftbox-label">🎁 Custom Gift Box</div>' +
+              '<div class="order-giftbox-items">' + gbDetail + '</div>' +
+            '</div>' +
+            '<div class="order-item-total">' + fmt(it.price * it.qty) + '</div>' +
+          '</div>';
+        }
         return '<div class="order-item">' +
           (it.image ? '<img src="' + esc(it.image) + '" alt="' + esc(it.name || '') + '" class="order-item-img">' : '') +
           '<div class="order-item-info"><strong>' + esc(it.name) + '</strong><span>— ' + it.qty + ' · ' + fmt(it.price) + '</span></div>' +
@@ -2023,11 +2432,164 @@
     var order = orders.find(function (o) { return o.id === orderId; });
     if (!order) return;
     if (order.status !== 'new') { toast('Order is no longer new.', 'error'); return; }
-    order.status = 'confirmed';
-    lsSet(ORDERS_KEY, orders);
-    renderOrders();
-    toast('Order #' + orderId.slice(-6).toUpperCase() + ' confirmed.', 'success');
+
+    // Update via Supabase RPC (server-side, secure) or fallback to localStorage
+    var doConfirm = function () {
+      order.status = 'confirmed';
+      lsSet(ORDERS_KEY, orders);
+      renderOrders();
+      toast('Order #' + orderId.slice(-6).toUpperCase() + ' confirmed.', 'success');
+    };
+
+    if (window.__candyAuth && window.__candyAuth.setOrderStatus) {
+      window.__candyAuth.setOrderStatus(orderId, 'confirmed')
+        .then(function () {
+          doConfirm();
+        })
+        .catch(function (err) {
+          toast(err.message || 'Failed to confirm order.', 'error');
+        });
+    } else {
+      doConfirm();
+    }
   });
+
+  /* """ Users tab (owner only) """ */
+  function renderUsersTab() {
+    if (!isOwner()) return;
+    var host = $('usersList');
+    if (!host) return;
+    if (window.__candyAuth && window.__candyAuth.fetchUsers) {
+      host.innerHTML = '<p style="text-align:center;color:var(--ink-soft);">Loading users…</p>';
+      window.__candyAuth.fetchUsers()
+        .then(function (profiles) {
+          if (!profiles || !profiles.length) {
+            host.innerHTML = '<p class="shop-empty" style="text-align:left;">No users yet.</p>';
+            return;
+          }
+          host.innerHTML = profiles.map(function (u) {
+            var statusClass = u.status === 'banned' ? 'st-revoked' : (u.status === 'active' ? 'st-active' : '');
+            var statusText = u.status || 'active';
+            var roleClass = u.role === 'owner' ? 'st-new' : (u.role === 'employee' ? 'st-confirmed' : 'st-new');
+            var roleText = u.role || 'customer';
+            var created = u.created_at ? new Date(u.created_at).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
+            var banIc = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/></svg>';
+            var unbanIc = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>';
+            var canBan = u.id !== (window.__candyProfile && window.__candyProfile.id) && u.role !== 'owner';
+            return (
+              '<div class="admin-row" data-uid="' + esc(u.id) + '">' +
+                '<div class="admin-row-info" style="min-width:200px;"><h4>' + esc(u.name || '—') + '</h4><p>' + esc(u.email || '—') + ' · ' + created + '</p></div>' +
+                '<span class="tag tag-cat" style="background:var(--bg-soft);color:var(--ink-soft);">' + esc(roleText) + '</span>' +
+                '<span class="st ' + statusClass + '">' + esc(statusText) + '</span>' +
+                '<div class="row-actions">' +
+                  (canBan ? '<button class="icon-btn' + (u.status === 'banned' ? '' : ' danger') + '" data-toggle-ban="' + esc(u.id) + '" title="' + (u.status === 'banned' ? 'Unban' : 'Ban') + '">' + (u.status === 'banned' ? unbanIc : banIc) + '</button>' : '') +
+                '</div>' +
+              '</div>'
+            );
+          }).join('');
+          host.querySelectorAll('[data-toggle-ban]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var uid = btn.getAttribute('data-toggle-ban');
+              var user = profiles.find(function (p) { return p.id === uid; });
+              if (!user) return;
+              var newStatus = user.status === 'banned' ? 'active' : 'banned';
+              var confirmMsg = newStatus === 'banned'
+                ? 'Ban this user? They will no longer be able to log in or place orders.'
+                : 'Unban this user? Their access will be restored.';
+              if (!confirm(confirmMsg)) return;
+              window.__candyAuth.setStatus(uid, newStatus)
+                .then(function () {
+                  renderUsersTab();
+                  toast('User ' + (newStatus === 'banned' ? 'banned' : 'unbanned') + '.', 'success');
+                })
+                .catch(function (err) { toast(err.message || 'Failed to update status.', 'error'); });
+            });
+          });
+        })
+        .catch(function (err) {
+          host.innerHTML = '<p style="text-align:center;color:var(--accent-deep);">Failed to load users: ' + esc(err.message) + '</p>';
+        });
+    } else {
+      host.innerHTML = '<p class="shop-empty" style="text-align:left;">Supabase not configured — users are managed locally.</p>';
+    }
+  }
+
+  /* """ Activity Log tab (owner only) """ */
+  var activityPage = 0;
+  function renderActivityTab() {
+    if (!isOwner()) return;
+    var host = $('activityList');
+    var pageEl = $('activityPage');
+    if (!host) return;
+    if (window.__candyAuth && window.__candyAuth.fetchActivity) {
+      host.innerHTML = '<p style="text-align:center;color:var(--ink-soft);">Loading activity log…</p>';
+      window.__candyAuth.fetchActivity(30, activityPage * 30)
+        .then(function (logs) {
+          if (!logs || !logs.length) {
+            host.innerHTML = '<p class="shop-empty" style="text-align:left;">No activity yet.</p>';
+            if (pageEl) pageEl.textContent = 'Page 1 of 1';
+            return;
+          }
+          host.innerHTML = logs.map(function (log) {
+            var time = log.created_at ? new Date(log.created_at).toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
+            var actor = log.actor_name || (log.actor_id ? log.actor_id.slice(0,8) : 'System');
+            var role = log.actor_role || '—';
+            var details = log.details ? '<pre style="font-size:0.7rem;max-height:120px;overflow:auto;margin-top:4px;background:rgba(0,0,0,0.04);padding:6px;border-radius:8px;">' + esc(JSON.stringify(log.details, null, 2)) + '</pre>' : '';
+            return (
+              '<div class="admin-row" style="flex-direction:column;align-items:flex-start;">' +
+                '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+                  '<strong style="font-size:0.9rem;">' + esc(log.action || '—') + '</strong>' +
+                  '<span class="st st-new">' + esc(log.entity || '') + (log.entity_id ? ' #' + esc(log.entity_id).slice(-6) : '') + '</span>' +
+                  '<span style="font-size:0.75rem;color:var(--ink-faint);">' + esc(actor) + ' (' + esc(role) + ')</span>' +
+                  '<span style="font-size:0.75rem;color:var(--ink-soft);margin-left:auto;">' + esc(time) + '</span>' +
+                '</div>' +
+                details +
+              '</div>'
+            );
+          }).join('');
+          if (pageEl) pageEl.textContent = 'Page ' + (activityPage + 1) + (logs.length < 30 ? ' (end)' : '');
+        })
+        .catch(function (err) {
+          host.innerHTML = '<p style="text-align:center;color:var(--accent-deep);">Failed to load activity: ' + esc(err.message) + '</p>';
+          if (pageEl) pageEl.textContent = '';
+        });
+    } else {
+      host.innerHTML = '<p class="shop-empty" style="text-align:left;">Supabase not configured — activity log requires Supabase.</p>';
+      if (pageEl) pageEl.textContent = '';
+    }
+  }
+
+  if ($('refreshActivityBtn')) {
+    $('refreshActivityBtn').addEventListener('click', function () {
+      activityPage = 0;
+      renderActivityTab();
+    });
+  }
+
+  /* """ Reset Orders — owner only """ */
+  var resetOrdersBtn = $('resetOrdersBtn');
+  function syncResetOrdersBtn() {
+    if (!resetOrdersBtn) return;
+    if (isOwner()) {
+      resetOrdersBtn.classList.remove('hidden');
+    } else {
+      resetOrdersBtn.classList.add('hidden');
+    }
+  }
+  if (resetOrdersBtn) {
+    resetOrdersBtn.addEventListener('click', function () {
+      if (!isOwner()) { toast('Owner access required.', 'error'); return; }
+      if (!orders.length) { toast('There are no orders to reset.', 'error'); return; }
+      var ok = confirm('Are you sure you want to reset the orders list?\n\nThis will remove all ' + orders.length + ' order(s) from the current list and cannot be undone.');
+      if (!ok) return;
+      orders = [];
+      lsSet(ORDERS_KEY, orders);
+      window.candyOrders = orders;
+      renderOrders();
+      renderAdminStats();
+      toast('Orders list has been reset.', 'success');
+    });
+  }
 
   var pendingLogo = null;
 
@@ -2488,6 +3050,31 @@
   window.candyOrders = orders;
 
   /* """"" Order notifications (owner + employee popups) """"" */
+  var shownPopups = {}; // order id → true — prevents duplicate popups
+
+  /* Notification sound via Web Audio API */
+  var _notifAudioCtx = null;
+  function playNotifSound() {
+    try {
+      if (!_notifAudioCtx) _notifAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (_notifAudioCtx.state === 'suspended') _notifAudioCtx.resume();
+      // Pleasant two-tone chime
+      var now = _notifAudioCtx.currentTime;
+      [0, 0.18].forEach(function (offset, i) {
+        var osc = _notifAudioCtx.createOscillator();
+        var gain = _notifAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = i === 0 ? 880 : 1100;
+        gain.gain.setValueAtTime(0.35, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.4);
+        osc.connect(gain);
+        gain.connect(_notifAudioCtx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.4);
+      });
+    } catch (e) {}
+  }
+
   function notifyNewOrder(order) {
     // 1) Persist notification locally for any tab on this browser
     var notifications = lsGet('candy_notifications', []);
@@ -2544,7 +3131,25 @@
     var host = $('toastHost');
     if (!host) return;
 
+    // Guard: never show the same order's popup twice
+    if (shownPopups[order.id]) return;
+    shownPopups[order.id] = true;
+
+    // Play notification sound
+    playNotifSound();
+
     var itemsHtml = order.items.map(function (it) {
+      // Custom gift box
+      if (it.type === 'customGiftBox') {
+        var gbItems = (it.items || []).map(function (gi) {
+          return '<div style="font-size:0.75rem;opacity:0.85;padding:1px 0;">' + esc(gi.name) + (gi.qty > 1 ? ' ×' + gi.qty : '') + ' — ' + fmt(gi.price * gi.qty) + '</div>';
+        }).join('');
+        return '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
+          '<div style="font-weight:600;font-size:0.85rem;">🎁 Custom Gift Box</div>' +
+          gbItems +
+          '<div style="font-weight:700;font-size:0.85rem;margin-top:2px;">' + fmt(it.price * it.qty) + '</div>' +
+        '</div>';
+      }
       return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
         (it.image ? '<img src="' + esc(it.image) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex:none;">' : '') +
         '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(it.name) + '</div>' +
@@ -2569,7 +3174,7 @@
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">' +
             '<strong style="font-size:0.95rem;">New Order</strong>' +
-            '<button class="order-popup-close" aria-label="Dismiss" style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.15);border:0;color:inherit;display:grid;place-items:center;cursor:pointer;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>' +
+            '<button class="order-popup-close" aria-label="Dismiss notification" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.25);color:inherit;display:grid;place-items:center;cursor:pointer;transition:background 0.2s ease,transform 0.2s ease;flex-shrink:0;" onmouseover="this.style.background=\'rgba(255,255,255,0.4)\';this.style.transform=\'scale(1.1)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.2)\';this.style.transform=\'none\'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button>' +
           '</div>' +
           '<div style="font-size:0.8rem;opacity:0.85;margin-bottom:8px;">' + esc(order.customerName) + ' — ' + new Date(order.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</div>' +
           '<div style="max-height:180px;overflow-y:auto;padding-right:4px;">' + itemsHtml + '</div>' +
@@ -2605,12 +3210,14 @@
   }
 
   // Listen for cross-tab notifications
+  // Only staff (owner/employee) should see popups; the isStaff() check
+  // prevents customers from seeing staff notifications on the same browser.
   if (window.BroadcastChannel) {
     try {
       var notifyChannel = new BroadcastChannel('candy-shop-notifications');
       notifyChannel.onmessage = function (ev) {
         if (ev.data && ev.data.type === 'NEW_ORDER' && ev.data.order) {
-          showOrderPopup(ev.data.order);
+          if (isStaff()) showOrderPopup(ev.data.order);
         }
       };
     } catch (e) {}
@@ -2621,14 +3228,32 @@
   lsGet('candy_notifications', []);
 
   /* """"" Init """"" */
-  buildAccountMenu();
-  renderCartBadge();
-  renderCart();
-  renderFilters();
-  renderShop();
-  renderSiteContent();
-  renderAdminProducts();
-  renderAdminCategories();
-  renderKeys();
+  function runInit() {
+    buildAccountMenu();
+    renderCartBadge();
+    renderCart();
+    renderFilters();
+    renderShop();
+    renderSiteContent();
+    renderAdminProducts();
+    renderAdminCategories();
+    renderKeys();
+    renderEmpKeys();
+  }
+
+  // If Supabase is available, wait for it to be ready (cache warmed, profile loaded)
+  // otherwise run immediately.
+  if (window.__candyAuth && window.__candyAuth.ready) {
+    window.__candyAuth.ready.then(function () {
+      // The __candyOnSupabaseReady hook in supabase-sync.js fires after warmCache
+      window.__candyOnSupabaseReady = function () {
+        runInit();
+      };
+      // If ready already fired, run init directly
+      if (window.__candySupabaseReady) runInit();
+    });
+  } else {
+    runInit();
+  }
 })();
 
