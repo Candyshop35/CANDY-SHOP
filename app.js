@@ -65,6 +65,21 @@
   var users     = lsGet(USERS_KEY, []);
   var session   = lsGet(SESSION_KEY, null);
 
+  // Re-sync all store variables from localStorage (call after warmCache / Supabase ops)
+  function resyncFromCache() {
+    cats      = lsGet(CATS_KEY, []);
+    products  = lsGet(PRODUCTS_KEY, []);
+    cart      = lsGet(CART_KEY, []);
+    keys      = lsGet(KEYS_KEY, []);
+    orders    = lsGet(ORDERS_KEY, []);
+    users     = lsGet(USERS_KEY, []);
+    session   = lsGet(SESSION_KEY, null);
+    var _gc = lsGet(GIFT_KEY, null);
+    if (_gc && typeof _gc === 'object' && Array.isArray(_gc.prices)) giftConfig = _gc;
+    var _sc = lsGet(SITE_KEY, null);
+    if (_sc) { site = _sc; deepMergeDefaults(site, JSON.parse(JSON.stringify(DEFAULT_SITE))); }
+  }
+
   /* """"" Editable site content (owner-controlled) """"" */
   var DEFAULT_SITE = {
     logo: 'https://cdn.discordapp.com/attachments/1515105758633529454/1543275605359984751/LOGO_.png?ex=6a9446e8&is=6a92f568&hm=24b9fceb66868dfc725648b1b89dc933e1bd4122b91e56a37e9444903695269e',
@@ -504,6 +519,7 @@
       if (window.__candyAuth && window.__candyAuth.signIn) {
         window.__candyAuth.signIn(rawUser, pass)
           .then(function (data) {
+            resyncFromCache();
             closeModalOverlays();
             buildAccountMenu();
             // The profile is loaded by the auth handler
@@ -550,6 +566,7 @@
       if (window.__candyAuth && window.__candyAuth.signUp) {
         window.__candyAuth.signUp(name, email, p1)
           .then(function (data) {
+            resyncFromCache();
             closeModalOverlays();
             buildAccountMenu();
             if (window.__candyProfile) {
@@ -589,6 +606,7 @@
         window.__candyAuth.redeemKey(raw)
           .then(function (keyType) {
             // Reload keys and re-render
+            resyncFromCache();
             renderKeys();
             renderEmpKeys();
             closeModalOverlays();
@@ -3229,6 +3247,8 @@
 
   /* """"" Init """"" */
   function runInit() {
+    // Re-read all local vars from localStorage — Supabase warmCache just populated it
+    resyncFromCache();
     buildAccountMenu();
     renderCartBadge();
     renderCart();
