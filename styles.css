@@ -1861,9 +1861,14 @@ html.js .shop-card.reveal.in:hover { transform: translateY(-8px); box-shadow: va
   box-shadow: var(--shadow-rose);
 }
 
-/* Overlay */
+/* Overlay — override .modal-overlay's grid so the builder
+   fills the available viewport height (flex stretch) instead
+   of auto-sizing to its content and getting clipped. */
 .giftbox-overlay {
   padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
 }
 
 /* Builder container */
