@@ -287,7 +287,7 @@
       <div class="modal-head">
         <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Welcome back</p>
         <h3 id="loginTitle">Login</h3>
-        <p class="modal-sub">Sign in as a member, or with your owner credentials (INVYX / 2705).</p>
+        <p class="modal-sub">Sign in to your account.</p>
       </div>
       <form id="loginForm" novalidate>
         <div class="field">
@@ -373,6 +373,17 @@
         <p class="modal-sub">Tell us where to deliver and who to call. We cover all 58 wilayas of Algeria.</p>
       </div>
       <form id="checkoutForm" novalidate>
+        <!-- Gift price selection (only shown for gift products) -->
+        <div class="gift-price-section hidden" id="giftPriceSection" aria-live="polite">
+          <fieldset class="gift-price-fieldset">
+            <legend>Choose Gift Value (DZD)</legend>
+            <p class="gift-price-hint">Select the value of the gift. The recipient can use this toward any purchase.</p>
+            <div class="gift-price-options" id="giftPriceOptions"></div>
+            <div class="gift-price-error hidden" id="giftPriceError">Please choose a gift value before continuing.</div>
+            <div class="gift-price-selected hidden" id="giftPriceSelected"></div>
+          </fieldset>
+        </div>
+
         <fieldset class="delivery-fieldset">
           <legend>Delivery place</legend>
           <div class="delivery-options">
@@ -453,6 +464,7 @@
         <button class="admin-tab" data-tab="tabCategories">Categories</button>
         <button class="admin-tab" data-tab="tabKeys">Access Keys</button>
         <button class="admin-tab" data-tab="tabSite">Site Content</button>
+        <button class="admin-tab" data-tab="tabGifts">Gifts</button>
         <button class="admin-tab" data-tab="tabOrders">Orders</button>
       </nav>
       <div class="admin-body">
@@ -508,6 +520,12 @@
                 <label for="pTag">Badge (optional)</label>
                 <input id="pTag" type="text" placeholder="e.g. Bestseller, New, Sale" />
               </div>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label style="flex-direction:row;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="pIsGift" style="width:auto;accent-color:var(--accent-deep);" />
+                This product is a Gift (customer must select a gift value in DZD at checkout)
+              </label>
             </div>
             <div class="field">
               <label for="pDesc">Description</label>
@@ -911,6 +929,71 @@
             </div>
           </section>
 
+        </div>
+
+        <!-- Gifts tab -->
+        <div class="admin-panel" id="tabGifts">
+          <div class="admin-toolbar">
+            <span class="admin-toolbar-title">Manage gift pricing for products marked as gifts.</span>
+          </div>
+
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Gift Price Selection</h3>
+              <p>Enable or disable the gift price-selection feature. When enabled, customers must choose a gift value (in DZD) before placing an order for any product marked as a gift.</p>
+            </div>
+            <div class="pf" style="animation:none;">
+              <div class="field" style="flex-direction:row;align-items:center;gap:14px;margin-bottom:0;">
+                <label for="giftToggle" style="margin-bottom:0;white-space:nowrap;">Gift pricing</label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="giftToggle" />
+                  <span class="toggle-slider"></span>
+                </label>
+                <span id="giftToggleLabel" style="font-size:0.84rem;color:var(--ink-soft);"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Gift Price Options (DZD)</h3>
+              <p>Add, edit, or remove the DZD values customers can choose from when buying a gift. All values are in Algerian Dinar (DZD).</p>
+            </div>
+            <form id="giftPriceForm" class="pf" novalidate>
+              <div class="form-row">
+                <div class="field" style="margin-bottom:0">
+                  <label for="giftPriceValue">Price value (DZD)</label>
+                  <input id="giftPriceValue" type="number" min="1" step="1" placeholder="e.g. 500" required />
+                </div>
+                <div class="field" style="margin-bottom:0;display:flex;align-items:flex-end;">
+                  <button type="submit" class="btn btn-primary btn-sm" id="giftPriceSubmit">Add price</button>
+                </div>
+              </div>
+            </form>
+            <div id="giftPriceList" class="admin-list" style="margin-top:12px;"></div>
+          </section>
+
+          <section class="site-section">
+            <div class="site-section-head">
+              <h3>Gift Value Limits (optional)</h3>
+              <p>Set minimum and maximum allowed gift values. Leave blank for no limit.</p>
+            </div>
+            <form id="giftLimitsForm" class="pf" novalidate>
+              <div class="form-row">
+                <div class="field" style="margin-bottom:0">
+                  <label for="giftMinVal">Minimum value (DZD)</label>
+                  <input id="giftMinVal" type="number" min="0" step="1" placeholder="e.g. 500" />
+                </div>
+                <div class="field" style="margin-bottom:0">
+                  <label for="giftMaxVal">Maximum value (DZD)</label>
+                  <input id="giftMaxVal" type="number" min="0" step="1" placeholder="e.g. 50000" />
+                </div>
+              </div>
+              <div class="pf-actions" style="justify-content:flex-start;">
+                <button type="submit" class="btn btn-primary btn-sm">Save limits</button>
+              </div>
+            </form>
+          </section>
         </div>
 
         <!-- Orders tab -->

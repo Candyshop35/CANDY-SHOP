@@ -28,6 +28,22 @@
   var ORDERS_KEY = 'candy_orders';
   var USERS_KEY = 'candy_users';
   var SESSION_KEY = 'candy_session';
+  var GIFT_KEY = 'candy_gift_config';
+
+  /* """"" Gift pricing configuration (owner-controlled) """"" */
+  var DEFAULT_GIFT = {
+    enabled: false,       // master toggle: is gift price-selection on?
+    prices: [500, 1000, 2000, 5000, 10000], // DZD options shown to customers
+    minValue: null,       // optional minimum DZD value
+    maxValue: null        // optional maximum DZD value
+  };
+  var giftConfig = lsGet(GIFT_KEY, null);
+  if (!giftConfig || typeof giftConfig !== 'object' || !Array.isArray(giftConfig.prices)) {
+    giftConfig = JSON.parse(JSON.stringify(DEFAULT_GIFT));
+    lsSet(GIFT_KEY, giftConfig);
+  }
+  function isGiftEnabled() { return !!giftConfig.enabled; }
+  function isGiftProduct(p) { return !!(p && p.isGift); }
 
   /* """"" Seed """"" */
   var cats = lsGet(CATS_KEY, null);
@@ -241,6 +257,7 @@
       keys: lsGet(KEYS_KEY, []),
       site: lsGet(SITE_KEY, null),
       orders: lsGet(ORDERS_KEY, []),
+      giftConfig: lsGet(GIFT_KEY, null),
       storageVersion: lsGet('candy_storage_version', '1.0'),
       ownerCreated: lsGet('candy_owner_created', false)
     };
@@ -273,6 +290,7 @@
         if (data.keys) lsSet(KEYS_KEY, data.keys);
         if (data.site) lsSet(SITE_KEY, data.site);
         if (data.orders) lsSet(ORDERS_KEY, data.orders);
+        if (data.giftConfig && typeof data.giftConfig === 'object' && Array.isArray(data.giftConfig.prices)) lsSet(GIFT_KEY, data.giftConfig);
         if (data.storageVersion) lsSet('candy_storage_version', data.storageVersion);
         if (data.ownerCreated !== undefined) lsSet('candy_owner_created', data.ownerCreated);
         toast('Data imported successfully. Reloading...', 'success');
@@ -286,7 +304,7 @@
   }
 
   function clearAllData() {
-    var keysToClear = [USERS_KEY, SESSION_KEY, CART_KEY, PRODUCTS_KEY, CATS_KEY, KEYS_KEY, SITE_KEY, ORDERS_KEY, 'candy_storage_version', 'candy_owner_created', 'candy_notifications'];
+    var keysToClear = [USERS_KEY, SESSION_KEY, CART_KEY, PRODUCTS_KEY, CATS_KEY, KEYS_KEY, SITE_KEY, ORDERS_KEY, GIFT_KEY, 'candy_storage_version', 'candy_owner_created', 'candy_notifications'];
     keysToClear.forEach(function (k) { localStorage.removeItem(k); });
     toast('All data cleared. Reloading...', 'success');
     setTimeout(function () { window.location.reload(); }, 800);
@@ -763,8 +781,120 @@
     resetCheckoutForm();
     if (coCount) coCount.textContent = cartQty() + ' item(s)';
     if (coTotal) coTotal.textContent = fmt(cartTotalAmt());
+    renderGiftSelector();
     closeCart();
     openModal('modalCheckout');
+  }
+
+  /* """"" Gift price selection in checkout """"" */
+  var giftPriceChoice = null; // selected DZD value (numeric) or null
+  var giftModeItems = null;   // product ids in the cart that are gifts
+
+  function cartGiftProducts() {
+    return cart.filter(function (x) {
+      var p = product(x.id);
+      return p && isGiftProduct(p);
+    });
+  }
+
+  // Build the DZD option list from giftConfig (owner-controlled), honoring min/max.
+  function activeGiftPrices() {
+    if (!giftConfig || !Array.isArray(giftConfig.prices)) return [];
+    var lo = (giftConfig.minValue == null) ? 0 : Number(giftConfig.minValue);
+    var hi = (giftConfig.maxValue == null) ? Infinity : Number(giftConfig.maxValue);
+    return giftConfig.prices.filter(function (v) {
+      var n = Number(v);
+      return isFinite(n) && n > 0 && n >= lo && n <= hi;
+    }).map(Number).sort(function (a, b) { return a - b; });
+  }
+
+  function renderGiftSelector() {
+    var section = $('giftPriceSection');
+    var optionsHost = $('giftPriceOptions');
+    if (section) section.classList.add('hidden');
+    giftPriceChoice = null;
+    giftModeItems = null;
+    var giftItems = cartGiftProducts();
+    if (!isGiftEnabled() || !giftItems.length) return;
+
+    var prices = activeGiftPrices();
+    if (prices.length < 1) {
+      // Owner hasn't configured any valid DZD values — block gifting clearly.
+      if (section) {
+        optionsHost.innerHTML = '<p class="gift-price-hint" style="color:var(--accent-deep);font-weight:600;">Gift values are not available right now. Please contact the shop.</p>';
+        section.classList.remove('hidden');
+      }
+      return;
+    }
+
+    giftModeItems = giftItems.map(function (x) { return x.id; });
+    optionsHost.innerHTML = prices.map(function (v) {
+      return '<button type="button" class="gift-price-option" data-value="' + v + '" role="radio" aria-checked="false">' + fmt(v) + '</button>';
+    }).join('');
+    if ($('giftPriceSelected')) $('giftPriceSelected').classList.add('hidden');
+    if ($('giftPriceError')) $('giftPriceError').classList.add('hidden');
+    if (section) section.classList.remove('hidden');
+
+    optionsHost.querySelectorAll('.gift-price-option').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectGiftPrice(Number(btn.getAttribute('data-value')));
+      });
+    });
+  }
+
+  function selectGiftPrice(value) {
+    giftPriceChoice = value;
+    if ($('giftPriceOptions')) {
+      $('giftPriceOptions').querySelectorAll('.gift-price-option').forEach(function (b) {
+        var on = Number(b.getAttribute('data-value')) === value;
+        b.classList.toggle('selected', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    if ($('giftPriceError')) $('giftPriceError').classList.add('hidden');
+    var sel = $('giftPriceSelected');
+    if (sel) {
+      sel.textContent = 'Gift value selected: ' + fmt(value);
+      sel.classList.remove('hidden');
+    }
+    updateGiftCheckoutTotals();
+  }
+
+  function updateGiftCheckoutTotals() {
+    if (!giftModeItems) return;
+    var base = 0, giftQty = 0;
+    cart.forEach(function (x) {
+      if (giftModeItems.indexOf(x.id) !== -1) {
+        giftQty += x.qty;
+      } else {
+        var p = product(x.id);
+        if (p) base += p.price * x.qty;
+      }
+    });
+    if (coTotal) {
+      var total = base + (giftPriceChoice ? giftPriceChoice * giftQty : 0);
+      coTotal.textContent = fmt(total);
+    }
+  }
+
+  function scrollGiftIntoView() {
+    var sec = $('giftPriceSection');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // total order value computed live (used at submit)
+  function computeOrderSubtotal() {
+    var base = 0, giftQty = 0;
+    cart.forEach(function (x) {
+      var p = product(x.id);
+      if (!p) return;
+      if (giftModeItems && giftModeItems.indexOf(x.id) !== -1) {
+        giftQty += x.qty;
+      } else {
+        base += p.price * x.qty;
+      }
+    });
+    return base + (giftPriceChoice ? giftPriceChoice * giftQty : 0);
   }
 
   if (coWilaya) coWilaya.addEventListener('change', onWilayaChange);
@@ -802,6 +932,17 @@
     if (name.length < 3) { toast('Please enter the full name of the person receiving the order.', 'error'); return; }
     if (!/^0[2-9]\d{8}$/.test(phone)) { toast('Enter a valid Algerian phone number (e.g. 0555555555).', 'error'); return; }
 
+    // Gift validation: if the cart contains gift products and gift pricing is enabled,
+    // a DZD value MUST be chosen before the order can be finalised.
+    var hasGifts = isGiftEnabled() && giftModeItems && giftModeItems.length > 0;
+    if (hasGifts && (giftPriceChoice == null || !isFinite(giftPriceChoice))) {
+      toast('Please choose a gift value before continuing.', 'error');
+      var err = $('giftPriceError');
+      if (err) err.classList.remove('hidden');
+      scrollGiftIntoView();
+      return;
+    }
+
     var baladiaName = '';
     if (mode === 'pickup') {
       baladiaName = '';
@@ -820,11 +961,29 @@
       ? 'Pickup at the boutique — Boumerdès city centre'
       : 'Home delivery — ' + wilayaName(wilCode) + (baladiaName ? ' — ' + baladiaName : '') + (address ? ', ' + address : '');
 
-    // Build order record
+    var isGiftOrder = isGiftEnabled() && giftModeItems && giftModeItems.length > 0;
+
+    // Build order record — gift items carry selectedGiftPrice/currency/type.
     var orderItems = cart.map(function (entry) {
       var p = product(entry.id);
-      return p ? { id: p.id, name: p.name, price: p.price, qty: entry.qty, image: p.image } : null;
+      if (!p) return null;
+      var isGiftLine = isGiftOrder && giftModeItems.indexOf(entry.id) !== -1;
+      if (isGiftLine) {
+        return {
+          id: p.id,
+          name: p.name,
+          price: giftPriceChoice, // effective unit price for a gift is the chosen DZD value
+          qty: entry.qty,
+          image: p.image,
+          type: 'gift',
+          selectedGiftPrice: giftPriceChoice,
+          currency: 'DZD'
+        };
+      }
+      return { id: p.id, name: p.name, price: p.price, qty: entry.qty, image: p.image };
     }).filter(Boolean);
+
+    var resolvedSubtotal = isGiftOrder ? computeOrderSubtotal() : cartTotalAmt();
 
     var order = {
       id: uid('o'),
@@ -838,9 +997,14 @@
       address: address,
       note: note,
       items: orderItems,
-      subtotal: cartTotalAmt(),
+      subtotal: resolvedSubtotal,
       status: 'new'
     };
+    if (isGiftOrder) {
+      order.selectedGiftPrice = giftPriceChoice;
+      order.currency = 'DZD';
+      order.hasGifts = true;
+    }
 
     orders.unshift(order);
     lsSet(ORDERS_KEY, orders);
@@ -899,8 +1063,10 @@
     shopGrid.innerHTML = list.map(function (p) {
       var sold  = (p.stock != null && p.stock <= 0);
       var low   = (p.stock != null && p.stock > 0 && p.stock <= 5);
-      var media = '<div class="card-media"><img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">' + (p.tag ? '<span class="card-chip">' + esc(p.tag) + '</span>' : '') + '</div>';
+      var giftBadge = isGiftEnabled() && isGiftProduct(p);
+      var media = '<div class="card-media"><img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">' + (giftBadge ? '<span class="card-chip chip-gift">gift</span>' : (p.tag ? '<span class="card-chip">' + esc(p.tag) + '</span>' : '')) + '</div>';
       var title = '<h3 class="card-title">' + esc(p.name) + '</h3>';
+      var giftNote = giftBadge ? '<span class="stock-note gift-hint">Gift — choose value at checkout (DZD)</span>' : '';
       var body  = '<p class="card-text">' + esc((p.description || '').slice(0, 110)) + ((p.description || '').length > 110 ? '…' : '') + '</p>';
       var price = '<div class="shop-price"><span class="amount">' + fmt(p.price) + '</span></div>';
       var stepper = '<div class="stepper"><button data-sp="dec" aria-label="Decrease quantity">−</button><span>1</span><button data-sp="inc" aria-label="Increase quantity">+</button></div>';
@@ -910,7 +1076,7 @@
       return (
         '<article class="shop-card reveal' + (sold ? ' soldout' : '') + '">' +
           media +
-          '<div class="card-body">' + title + body + price + buyRow + stockNote + '</div>' +
+          '<div class="card-body">' + title + body + price + giftNote + buyRow + stockNote + '</div>' +
         '</article>'
       );
     }).join('');
@@ -1085,10 +1251,12 @@
         syncThemeInputs();
         updateStorageStats();
 
-        // Render orders if Orders tab is active
+        // Render orders/gifts if the respectively active tab is open
         var activeTab = document.querySelector('.admin-tab.active');
-        if (activeTab && activeTab.getAttribute('data-tab') === 'tabOrders') {
-          renderOrders();
+        if (activeTab) {
+          var activeTabId = activeTab.getAttribute('data-tab');
+          if (activeTabId === 'tabOrders') renderOrders();
+          if (activeTabId === 'tabGifts') renderGiftAdmin();
         }
       } else if (isEmployee()) {
         // Employee only sees Orders tab and stats
@@ -1166,6 +1334,7 @@
       if (id === 'tabCategories') renderAdminCategories();
       if (id === 'tabKeys')       renderKeys();
       if (id === 'tabSite')       renderSiteTab();
+      if (id === 'tabGifts')      renderGiftAdmin();
       if (id === 'tabOrders')     renderOrders();
     });
   });
@@ -1183,6 +1352,7 @@
     $('pStock').value = '';
     $('pTag').value = '';
     $('pUrl').value = '';
+    if ($('pIsGift')) $('pIsGift').checked = false;
     var pPreviewEl = $('pPreview');
     pPreviewEl.hidden = true;
     pPreviewEl.removeAttribute('src');
@@ -1257,6 +1427,7 @@
     $('pDesc').value = p.description || '';
     $('pTag').value = p.tag || '';
     $('pUrl').value = (p.image && p.image.indexOf('data:') !== 0) ? p.image : '';
+    if ($('pIsGift')) $('pIsGift').checked = !!p.isGift;
     var pv2 = $('pPreview');
     if (p.image && p.image.indexOf('data:') === 0) {
       pv2.src = p.image; pv2.hidden = false;
@@ -1339,6 +1510,7 @@
     var desc = $('pDesc').value.trim();
     var tag  = $('pTag').value.trim();
     var url  = $('pUrl').value.trim();
+    var isGift = $('pIsGift') ? $('pIsGift').checked : false;
 
     if (!name) { toast('Product needs a name.', 'error'); return; }
     if (!isFinite(rawPrice) || rawPrice < 0) { toast('Enter a valid price (>= 0).', 'error'); return; }
@@ -1364,6 +1536,7 @@
       p2.description = desc;
       p2.tag = tag;
       p2.image = image;
+      p2.isGift = isGift;
       toast('Product updated.', 'success');
     } else {
       products.push({
@@ -1374,7 +1547,8 @@
         stock: (stock == null || isNaN(stock) ? null : stock),
         description: desc,
         tag: tag,
-        image: image
+        image: image,
+        isGift: isGift
       });
       toast('Product added.', 'success');
     }
@@ -1682,6 +1856,118 @@
     populateHeroForm();
     populateMarqueeForm();
     populateVisitForm();
+  }
+
+  /* """ Gifts tab """ */
+  function renderGiftAdmin() {
+    // Only owner can access gift admin
+    if (!isOwner()) {
+      toast('Owner access required.', 'error');
+      return;
+    }
+    renderGiftToggle();
+    renderGiftPrices();
+    renderGiftLimits();
+  }
+
+  function renderGiftToggle() {
+    var el = $('giftToggle');
+    var label = $('giftToggleLabel');
+    if (!el) return;
+    el.checked = !!giftConfig.enabled;
+    el.onchange = function () {
+      giftConfig.enabled = el.checked;
+      lsSet(GIFT_KEY, giftConfig);
+      label.textContent = el.checked ? 'ON' : 'OFF';
+      toast('Gift pricing ' + (el.checked ? 'enabled' : 'disabled') + '.', 'success');
+      // Re-render shop and filters to reflect the change
+      renderShop();
+      renderFilters();
+      renderAdminProducts();
+    };
+    label.textContent = giftConfig.enabled ? 'ON' : 'OFF';
+  }
+
+  function renderGiftPrices() {
+    var host = $('giftPriceList');
+    if (!host) return;
+    var prices = (giftConfig && Array.isArray(giftConfig.prices)) ? giftConfig.prices.slice().sort(function (a, b) { return a - b; }) : [];
+    if (!prices.length) {
+      host.innerHTML = '<p class="shop-empty" style="text-align:left;">No gift prices configured. Add DZD values above.</p>';
+      return;
+    }
+    var trash = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>';
+    host.innerHTML = prices.map(function (v) {
+      return (
+        '<div class="admin-row">' +
+          '<div class="admin-row-info"><h4>' + fmt(v) + '</h4><p>Gift value option</p></div>' +
+          '<div class="row-actions">' +
+            '<button class="icon-btn danger" data-gp-del="' + v + '" title="Delete">' + trash + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    // Add price form handler
+    var form = $('giftPriceForm');
+    if (form) {
+      // Avoid duplicate listeners
+      var newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+      newForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var val = parseInt($('giftPriceValue').value, 10);
+        if (!isFinite(val) || val <= 0) { toast('Enter a valid DZD amount.', 'error'); return; }
+        if (giftConfig.prices.indexOf(val) !== -1) { toast('This value already exists.', 'error'); return; }
+        giftConfig.prices.push(val);
+        lsSet(GIFT_KEY, giftConfig);
+        renderGiftPrices();
+        renderShop();
+        renderAdminProducts();
+        toast('Gift price ' + fmt(val) + ' added.', 'success');
+      });
+    }
+
+    // Delete handlers
+    host.querySelectorAll('[data-gp-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var val = parseInt(btn.getAttribute('data-gp-del'), 10);
+        if (!confirm('Remove ' + fmt(val) + ' from gift options?')) return;
+        giftConfig.prices = giftConfig.prices.filter(function (x) { return x !== val; });
+        lsSet(GIFT_KEY, giftConfig);
+        renderGiftPrices();
+        renderShop();
+        renderAdminProducts();
+        toast('Gift price removed.', 'success');
+      });
+    });
+  }
+
+  function renderGiftLimits() {
+    var form = $('giftLimitsForm');
+    if (!form) return;
+    $('giftMinVal').value = (giftConfig.minValue != null) ? giftConfig.minValue : '';
+    $('giftMaxVal').value = (giftConfig.maxValue != null) ? giftConfig.maxValue : '';
+
+    var newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    newForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var min = $('giftMinVal').value.trim();
+      var max = $('giftMaxVal').value.trim();
+      var minVal = min === '' ? null : parseInt(min, 10);
+      var maxVal = max === '' ? null : parseInt(max, 10);
+      if (min !== '' && (!isFinite(minVal) || minVal < 0)) { toast('Minimum must be a non-negative number.', 'error'); return; }
+      if (max !== '' && (!isFinite(maxVal) || maxVal <= 0)) { toast('Maximum must be a positive number.', 'error'); return; }
+      if (minVal != null && maxVal != null && minVal > maxVal) { toast('Minimum cannot exceed maximum.', 'error'); return; }
+      giftConfig.minValue = minVal;
+      giftConfig.maxValue = maxVal;
+      lsSet(GIFT_KEY, giftConfig);
+      renderGiftPrices();
+      renderShop();
+      renderAdminProducts();
+      toast('Gift limits saved.', 'success');
+    });
   }
 
   /* """ Orders tab """ */
