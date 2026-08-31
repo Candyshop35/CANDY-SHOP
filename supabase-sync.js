@@ -292,24 +292,13 @@
   }
 
   async function syncCategories(cats) {
-    // Replace-all: only the owner ever calls this path.
     try {
       var incoming = (cats || []).map(function (c) {
         return { id: c.id, name: c.name, description: c.description || '', sort: 0 };
       });
-      var keepIds = incoming.map(function (x) { return x.id; });
-      var cur = await supa.from('categories').select('id');
-      if (rlzErr(cur, 'categories read')) return false;
-      var curIds = cur.data ? cur.data.map(function (r) { return r.id; }) : [];
-      var toDelete = curIds.filter(function (id) { return keepIds.indexOf(id) === -1; });
-      if (toDelete.length) {
-        var del = await supa.from('categories').delete().in('id', toDelete);
-        if (rlzErr(del, 'categories delete')) return false;
-      }
-      if (incoming.length) {
-        var up = await supa.from('categories').upsert(incoming, { onConflict: 'id' });
-        if (rlzErr(up, 'categories upsert')) return false;
-      }
+      if (!incoming.length) return true;
+      var up = await supa.from('categories').upsert(incoming, { onConflict: 'id' });
+      if (rlzErr(up, 'categories upsert')) return false;
       return true;
     } catch (e) {
       reportSaveError('categories', e);
@@ -334,19 +323,9 @@
         else row.stock = null;
         return row;
       });
-      var keepIds = incoming.map(function (x) { return x.id; });
-      var cur = await supa.from('products').select('id');
-      if (rlzErr(cur, 'products read')) return false;
-      var curIds = cur.data ? cur.data.map(function (r) { return r.id; }) : [];
-      var toDelete = curIds.filter(function (id) { return keepIds.indexOf(id) === -1; });
-      if (toDelete.length) {
-        var del = await supa.from('products').delete().in('id', toDelete);
-        if (rlzErr(del, 'products delete')) return false;
-      }
-      if (incoming.length) {
-        var up = await supa.from('products').upsert(incoming, { onConflict: 'id' });
-        if (rlzErr(up, 'products upsert')) return false;
-      }
+      if (!incoming.length) return true;
+      var up = await supa.from('products').upsert(incoming, { onConflict: 'id' });
+      if (rlzErr(up, 'products upsert')) return false;
       return true;
     } catch (e) {
       reportSaveError('products', e);
@@ -411,22 +390,12 @@
           revoked: !!k.revoked
         };
       });
-      var keepCodes = incoming.map(function (x) { return x.code; });
-      var cur = await supa.from('registration_keys').select('code');
-      if (rlzErr(cur, 'keys read')) return false;
-      var curCodes = cur.data ? cur.data.map(function (r) { return r.code; }) : [];
-      var toDelete = curCodes.filter(function (code) { return keepCodes.indexOf(code) === -1; });
-      if (toDelete.length && window.__candyProfile && window.__candyProfile.role === 'owner') {
-        var del = await supa.from('registration_keys').delete().in('code', toDelete);
-        if (rlzErr(del, 'keys delete')) return false;
-      }
-      if (incoming.length) {
-        incoming.forEach(function (r) {
-          if (r.used_by && !/^[0-9a-f-]{36}$/i.test(String(r.used_by))) r.used_by = null;
-        });
-        var up = await supa.from('registration_keys').upsert(incoming, { onConflict: 'code' });
-        if (rlzErr(up, 'keys upsert')) return false;
-      }
+      if (!incoming.length) return true;
+      incoming.forEach(function (r) {
+        if (r.used_by && !/^[0-9a-f-]{36}$/i.test(String(r.used_by))) r.used_by = null;
+      });
+      var up = await supa.from('registration_keys').upsert(incoming, { onConflict: 'code' });
+      if (rlzErr(up, 'keys upsert')) return false;
       return true;
     } catch (e) {
       reportSaveError('registration keys', e);

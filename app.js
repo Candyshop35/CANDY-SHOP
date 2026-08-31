@@ -552,17 +552,7 @@
       var pass = $('loginPass').value;
       if (!rawUser || !pass) { toast('Fill in all login fields.', 'error'); return; }
 
-      // Hardcoded owner fallback (for backward compatibility)
-      if (rawUser.toUpperCase() === 'INVYX' && pass === '2705') {
-        session = { name: 'INVYX', email: 'invyx@owner.local', role: 'owner' };
-        lsSet(SESSION_KEY, session);
-        closeModalOverlays();
-        buildAccountMenu();
-        toast('Welcome back, Owner. Admin Dashboard is now available.', 'success');
-        return;
-      }
-
-      // Use Supabase Auth for login
+      // Use Supabase Auth for login (email or username)
       if (window.__candyAuth && window.__candyAuth.signIn) {
         window.__candyAuth.signIn(rawUser, pass)
           .then(function (data) {
