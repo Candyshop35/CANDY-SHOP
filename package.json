@@ -1,0 +1,9 @@
+{
+  "name": "candy-shop-boumerdes-production",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Candy Shop Boumerdès production-style Node.js server with SQLite persistence and server-side authentication",
+  "main": "server.js",
+  "scripts": {"start":"node server.js"},
+  "engines": {"node": ">=22"}
+}
